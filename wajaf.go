@@ -57,7 +57,7 @@ func NewFromXMLString(data string) *App {
 	// Unmarshal
 	xml.Unmarshal([]byte(data), app)
 
-	fmt.Println("%#v\n", app)
+	fmt.Printf("%#v\n", app)
 
 	return app
 }
