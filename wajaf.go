@@ -13,3 +13,16 @@ const VERSION = "0.0.0"
 // if LOG is set to TRUE, LOG indicates to the XCore libraries to log a trace of functions called, with most important parameters.
 // LOG can be set to true or false dynamically to trace only parts of code on demand.
 var LOG = false
+
+type App struct {
+}
+
+func NewFromXMLString(data string) *App {
+
+	return &App{}
+}
+
+func (a *App) GetJSON() string {
+
+	return "{\"status\":\"OK\"}"
+}
