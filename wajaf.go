@@ -8,7 +8,6 @@ package wajaf
 
 import (
 	"encoding/xml"
-	"fmt"
 )
 
 // VERSION is the used version nombre of the XCore library.
@@ -19,50 +18,22 @@ const VERSION = "0.0.2"
 // LOG can be set to true or false dynamically to trace only parts of code on demand.
 var LOG = false
 
-type App struct {
-	ID string `xml:"id,attr"`
-	//	Entry string `xml:",chardata"`
-	Containers []Container `xml:"container"`
-	Elements   []Element   `xml:"element"`
-	Events     []Event     `xml:"event"`
+type engine struct {
+	Containers map[string]string
+	Elements   map[string]string
 }
 
-type Container struct {
-	ID     string  `xml:"id,attr"`
-	Type   string  `xml:"type,attr"`
-	Zones  []Zone  `xml:"zone"`
-	Events []Event `xml:"event"`
+var Engine = engine{}
+
+func init() {
+
+	// Register all known containers and elements into engine
+
 }
 
-type Zone struct {
-	ID         string      `xml:"id,attr"`
-	Type       string      `xml:"type,attr"`
-	Containers []Container `xml:"container"`
-	Elements   []Element   `xml:"element"`
-	Events     []Event     `xml:"event"`
-}
-
-type Element struct {
-	ID   string `xml:"id,attr"`
-	Type string `xml:"type,attr"`
-}
-
-type Event struct {
-	Type string `xml:"type,attr"`
-}
-
-func NewFromXMLString(data string) *App {
+func NewAppFromXMLString(data string) *App {
 
 	app := &App{}
-	// Unmarshal
 	xml.Unmarshal([]byte(data), app)
-
-	fmt.Printf("%#v\n", app)
-
 	return app
-}
-
-func (a *App) GetJSON() string {
-
-	return "{\"status\":\"OK\"}"
 }
