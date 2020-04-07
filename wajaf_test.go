@@ -17,10 +17,23 @@ func readfile(name string, t *testing.T) string {
 
 func TestWajaf(t *testing.T) {
 
-	data := readfile("testunit/app.code", t)
+	app := NewApplication("manual_application")
+	c1 := NewSeparatorContainer("")
+	c1.SetAttributes(Attributes{"width": "max", "height": "max", "mode": "vertical", "auto": "yes"})
+	app.AddChild(c1)
 
-	w := NewAppFromXMLString(data)
+	fmt.Printf("APP = %#v\n", app)
 
-	fmt.Printf("%#v\n", w)
+	return
+	/*
+		data := readfile("testunit/app.code", t)
 
+		w := NewAppFromXMLString(data)
+
+		fmt.Printf("%#v\n", w)
+
+		s, err := json.Marshal(w)
+
+		fmt.Println("JSON = ", string(s), err)
+	*/
 }
