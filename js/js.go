@@ -1,4 +1,6 @@
-package wajaf
+// js package is made to load a javascript file and dispatch it on a web server or anything you want to.
+// You may simply copy the javasript files into a public directory, or dispatch them through this library
+package js
 
 import (
 	"io/ioutil"
@@ -20,7 +22,6 @@ func NewWJS(dir string) *WJS {
 func (js *WJS) Load(name string) ([]byte, error) {
 
 	// put protection and known files
-
 	jsFile, err := os.Open(js.Dir + name)
 	if err != nil {
 		return nil, err
