@@ -1,10 +1,10 @@
 package wajaf
 
-type HTMLFieldElement NodeDef
+type HTMLElement NodeDef
 
-func NewHTMLFieldElement(id string, data string) HTMLFieldElement {
+func NewHTMLElement(id string, data string) HTMLElement {
 
-	e := NewNode("element", "htlmelement")
+	e := NewNode("element", "htmlelement")
 	e.SetID(id)
 	e.SetData(data)
 

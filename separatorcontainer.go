@@ -1,10 +1,17 @@
 package wajaf
 
-type SeparatorContainer NodeDef
+// type SeparatorContainer NodeDef
 
-func NewSeparatorContainer(id string) SeparatorContainer {
+type SeparatorContainer struct {
+	NodeDef
+}
 
-	c := NewNode("container", "separatorcontainer")
+func NewSeparatorContainer(id string) *SeparatorContainer {
+
+	c := &SeparatorContainer{
+		NodeDef: NewNode("container", "separatorcontainer"),
+	}
+	//	c := NewNode("container", "separatorcontainer")
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener",
@@ -12,6 +19,12 @@ func NewSeparatorContainer(id string) SeparatorContainer {
 	c.RegisterKnownChildren([]string{"zone"})
 
 	return c
+}
+
+func (c *SeparatorContainer) NewZone(id string) NodeDef {
+	z := NewSeparatorZone(id)
+	c.AddChild(z)
+	return z
 }
 
 type SeparatorZone NodeDef
