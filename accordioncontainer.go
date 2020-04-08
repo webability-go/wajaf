@@ -8,7 +8,7 @@ func NewAccordionContainer(id string) AccordionContainer {
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener"})
-	c.RegisterKnownChildren([]string{"zone"})
+	c.RegisterKnownChildren([]string{"zone", "event", "help", "message"})
 
 	return c
 }

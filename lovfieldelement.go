@@ -10,7 +10,7 @@ func NewLOVFieldElement(id string, data string) LOVFieldElement {
 
 	e.RegisterKnownAttributes([]string{"display", "style", "classname", "left", "width", "right", "top", "height", "bottom",
 		"size", "visible", "info", "disabled", "readonly", "notnull", "helpmode"})
-	e.RegisterKnownMessages([]string{"defaultvalue", "helpdescription", "statusnotnull", "statuscheck"})
+	//	e.RegisterKnownMessages([]string{"defaultvalue", "helpdescription", "statusnotnull", "statuscheck"})
 
 	return e
 }

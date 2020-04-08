@@ -14,12 +14,19 @@ Manuals are available on godoc.org [![GoDoc](https://godoc.org/github.com/webabi
 
 TO DO:
 ======
-XML to Application decoder
-Application to XML and JSON encoders
-Tests
+- Adds local specific functions to all the Containers, Elements, Zones, etc to improve tree programmation.
+- Tests
 
 Version Changes Control
 =======================
+
+v0.0.5 - 2020-03-07
+-----------------------
+- Added UnmarshalXML
+- Added MarshalJSON
+- Added basic functions AddMessage, AddHelp, AddEvent to a Node, with auto creation of children nodes
+- Removed messages, events, help attributes of Node
+- Added AddZone() to SeparatorContainer as a new struct extended from DomDef interface to build upon specific functions for specific nodes (it works)
 
 v0.0.4 - 2020-03-06
 -----------------------

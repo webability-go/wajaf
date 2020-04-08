@@ -1,6 +1,9 @@
 package wajaf
 
 import (
+	"bytes"
+	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"strings"
@@ -11,54 +14,43 @@ type NodeDef interface {
 	fmt.GoStringer
 
 	RegisterKnownAttributes([]string) error
-	RegisterKnownMessages([]string) error
 	RegisterKnownChildren([]string) error
+
 	SetID(id string)
 	SetData(data string)
+	GetID() string
+	GetType() string
 	GetSuperType() string
+	GetData() string
 	SetAttribute(string, string) error
 	SetAttributes(Attributes) error
 	GetAttribute(string) (string, error)
 	GetAttributes() Attributes
-	SetMessage(string, string) error
-	SetMessages(Messages) error
-	GetMessage(string) (string, error)
-	GetMessages() Messages
-	SetEvent(string, string)
-	SetEvents(Events)
-	GetEvent(string) string
-	GetEvents() Events
+	AddHelp(string, string, string)
+	AddMessage(string, string)
+	AddEvent(string, string)
 	AddChild(NodeDef) error
 	GetChildren() []NodeDef
-	SetHelp(string, string, string)
-	GetHelp() (string, string, string)
 
 	//	DecodeAttributes(xml.StartElement)
-	//	UnmarshalXML(*xml.Decoder, xml.StartElement) error
-	//	MarshalXML(*xml.Encoder) error
-	//	UnmarshalJSON([]byte) error
-	//	MarshalJSON() ([]byte, error)
+	UnmarshalXML(*xml.Decoder, xml.StartElement) error
+	MarshalXML(*xml.Encoder) error
+	UnmarshalJSON([]byte) error
+	MarshalJSON() ([]byte, error)
 }
 
 type Attributes map[string]string
-type Messages map[string]string
-type Events map[string]string
 
 type Node struct {
 	knownAttributes map[string]bool
 	knownChildren   map[string]bool
-	knownMessages   map[string]bool
-	ID              string
-	SuperType       string
-	Type            string
-	Data            string
-	attributes      Attributes
-	messages        Messages
-	events          Events
-	children        []NodeDef
-	helptooltip     string
-	helptitle       string
-	helpdescription string
+
+	ID         string
+	SuperType  string
+	Type       string
+	Data       string
+	attributes Attributes
+	children   []NodeDef
 }
 
 func NewNode(supertype string, subtype string) NodeDef {
@@ -81,13 +73,6 @@ func (n *Node) RegisterKnownAttributes(attributes []string) error {
 	return nil
 }
 
-func (n *Node) RegisterKnownMessages(messages []string) error {
-	for _, v := range messages {
-		n.knownMessages[v] = true
-	}
-	return nil
-}
-
 func (n *Node) RegisterKnownChildren(children []string) error {
 	for _, v := range children {
 		n.knownChildren[v] = true
@@ -103,8 +88,20 @@ func (n *Node) SetData(data string) {
 	n.Data = data
 }
 
+func (n *Node) GetID() string {
+	return n.ID
+}
+
 func (n *Node) GetSuperType() string {
 	return n.SuperType
+}
+
+func (n *Node) GetType() string {
+	return n.Type
+}
+
+func (n *Node) GetData() string {
+	return n.Data
 }
 
 var errUnknownAttribute = errors.New("Node: unknown attribute for this type of node")
@@ -138,53 +135,19 @@ func (n *Node) GetAttributes() Attributes {
 	return n.attributes
 }
 
-var errUnknownMessage = errors.New("Node: unknown message for this type of node")
-
-func (n *Node) SetMessage(name string, value string) error {
-	if !n.knownMessages[name] {
-		return errUnknownMessage
-	}
-	n.messages[name] = value
-	return nil
+func (n *Node) AddHelp(tooltip string, title string, description string) {
+	h := NewHelp(tooltip, title, description)
+	n.children = append(n.children, h)
 }
 
-func (n *Node) SetMessages(mesg Messages) error {
-	for name, value := range mesg {
-		if !n.knownMessages[name] {
-			return errUnknownMessage
-		}
-		n.messages[name] = value
-	}
-	return nil
+func (n *Node) AddMessage(name string, value string) {
+	m := NewMessage(name, value)
+	n.children = append(n.children, m)
 }
 
-func (n *Node) GetMessage(name string) (string, error) {
-	if !n.knownMessages[name] {
-		return "", errUnknownMessage
-	}
-	return n.messages[name], nil
-}
-
-func (n *Node) GetMessages() Messages {
-	return n.messages
-}
-
-func (n *Node) SetEvent(name string, value string) {
-	n.events[name] = value
-}
-
-func (n *Node) SetEvents(evts Events) {
-	for name, value := range evts {
-		n.events[name] = value
-	}
-}
-
-func (n *Node) GetEvent(name string) string {
-	return n.events[name]
-}
-
-func (n *Node) GetEvents() Events {
-	return n.events
+func (n *Node) AddEvent(name string, code string) {
+	e := NewEvent(name, code)
+	n.children = append(n.children, e)
 }
 
 var errUnknownChildren = errors.New("Node: unknown children for this type of node")
@@ -215,7 +178,7 @@ func (n *Node) String() string {
 }
 
 func (n *Node) GoString() string {
-	sdata := []string{n.SuperType + ":" + n.Type}
+	sdata := []string{n.SuperType + ":" + n.Type + ":" + n.ID + ":(" + fmt.Sprint(len(n.Data)) + ")"}
 	for key, val := range n.attributes {
 		sdata = append(sdata, key+":"+val)
 	}
@@ -225,258 +188,113 @@ func (n *Node) GoString() string {
 	return "#{" + strings.Join(sdata, " ") + "}"
 }
 
-func (n *Node) SetHelp(tooltip string, title string, description string) {
-	n.helptooltip = tooltip
-	n.helptitle = title
-	n.helpdescription = description
-}
-
-func (n *Node) GetHelp() (string, string, string) {
-	return n.helptooltip, n.helptitle, n.helpdescription
-}
-
-/*
-type Container struct {
-	Node
-	Zones  []*Zone  `xml:"zone"`
-	Events []*Event `xml:"event"`
-}
-
-func (c *Container) DecodeAttributes(s xml.StartElement) {
+func (n *Node) DecodeAttributes(s xml.StartElement) {
 	for _, v := range s.Attr {
 		if v.Name.Local == "id" {
-			c.ID = v.Value
+			n.ID = v.Value
+			continue
 		}
 		if v.Name.Local == "type" {
-			c.Type = v.Value
+			n.Type = v.Value
+			continue
 		}
+		n.attributes[v.Name.Local] = v.Value
 	}
 }
 
-func (c *Container) String() string {
-	sdata := []string{"id:" + c.ID + " " + "Type:" + c.Type}
-	for _, val := range c.Zones {
-		sdata = append(sdata, "#"+fmt.Sprintf("%v", val))
-	}
-	for _, val := range c.Events {
-		sdata = append(sdata, "@"+fmt.Sprintf("%v", val))
-	}
-	return "CNT{" + strings.Join(sdata, "\n") + "}"
-}
+func (n *Node) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 
-// GoString will transform the XDataset into a readable string for humans
-func (c *Container) GoString() string {
-	return c.String()
-}
-
-type Zone struct {
-	Node
-	Containers []*Container `xml:"container"`
-	Elements   []*Element   `xml:"element"`
-	Events     []*Event     `xml:"event"`
-}
-
-func (z *Zone) DecodeAttributes(s xml.StartElement) {
-	for _, v := range s.Attr {
-		if v.Name.Local == "id" {
-			z.ID = v.Value
-		}
-		if v.Name.Local == "type" {
-			z.Type = v.Value
-		}
-	}
-}
-
-func (z *Zone) String() string {
-	sdata := []string{"id:" + z.ID}
-	for _, val := range z.Containers {
-		sdata = append(sdata, "+"+fmt.Sprintf("%v", val))
-	}
-	for _, val := range z.Elements {
-		sdata = append(sdata, "."+fmt.Sprintf("%v", val))
-	}
-	for _, val := range z.Events {
-		sdata = append(sdata, "@"+fmt.Sprintf("%v", val))
-	}
-	return "ZON{" + strings.Join(sdata, "\n") + "}"
-}
-
-// GoString will transform the XDataset into a readable string for humans
-func (z *Zone) GoString() string {
-	return z.String()
-}
-
-type Element struct {
-	Node
-	Events []*Event `xml:"event"`
-}
-
-func (e *Element) DecodeAttributes(s xml.StartElement) {
-	for _, v := range s.Attr {
-		if v.Name.Local == "id" {
-			e.ID = v.Value
-		}
-		if v.Name.Local == "type" {
-			e.Type = v.Value
-		}
-	}
-}
-
-type Event struct {
-	Node
-}
-
-func (e *Event) DecodeAttributes(s xml.StartElement) {
-	for _, v := range s.Attr {
-		if v.Name.Local == "type" {
-			e.Type = v.Value
-		}
-	}
-}
-
-func (a *App) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-
-	a.DecodeAttributes(start)
+	n.DecodeAttributes(start)
 
 	for {
 		t, _ := d.Token()
 		switch tt := t.(type) {
 		case xml.StartElement:
 			etype := tt.Name.Local
-			switch etype {
-			case "container":
-				c := &Container{}
-				c.UnmarshalXML(d, tt)
-				a.Containers = append(a.Containers, c)
-			case "element":
-				e := &Element{}
-				e.UnmarshalXML(d, tt)
-				a.Elements = append(a.Elements, e)
-			case "event":
-				e := &Event{}
-				e.UnmarshalXML(d, tt)
-				a.Events = append(a.Events, e)
-			default:
-			}
+			z := NewNode(etype, "")
+			z.UnmarshalXML(d, tt)
+			n.children = append(n.children, z)
 
 		case xml.EndElement:
 			if tt.Name == start.Name {
 				return nil
 			}
 		case xml.CharData:
-			//			fmt.Println("APP*", string(tt))
+			n.Data = string(tt)
 		}
 	}
+	return nil
 }
 
-func (c *Container) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+func (n *Node) MarshalXML(*xml.Encoder) error {
+	return nil
+}
 
-	c.DecodeAttributes(start)
+func (n *Node) UnmarshalJSON([]byte) error {
+	return nil
+}
 
-	for {
-		t, _ := d.Token()
-		switch tt := t.(type) {
-		case xml.StartElement:
-			etype := tt.Name.Local
-			switch etype {
-			case "zone":
-				z := &Zone{}
-				z.UnmarshalXML(d, tt)
-				c.Zones = append(c.Zones, z)
-			case "event":
-				e := &Event{}
-				e.UnmarshalXML(d, tt)
-				c.Events = append(c.Events, e)
-			default:
-			}
+func (n *Node) MarshalJSON() ([]byte, error) {
 
-		case xml.EndElement:
-			if tt.Name == start.Name {
-				return nil
-			}
-		case xml.CharData:
-			//			fmt.Println("CONTAINER*", string(tt))
+	buffer := bytes.NewBufferString("{\"tag\":\"" + n.SuperType + "\"")
+
+	// Attributes:
+	length := len(n.attributes)
+	candidate := length != 0 || n.ID != "" || n.Type != ""
+	if candidate {
+		buffer.WriteString(",\"attributes\":{")
+		if n.ID != "" {
+			buffer.WriteString("\"id\":\"" + n.ID + "\"")
 		}
-	}
-}
-
-func (e *Element) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-
-	e.DecodeAttributes(start)
-
-	for {
-		t, _ := d.Token()
-		switch tt := t.(type) {
-		case xml.StartElement:
-			etype := tt.Name.Local
-			switch etype {
-			case "event":
-				ne := &Event{}
-				ne.UnmarshalXML(d, tt)
-				e.Events = append(e.Events, ne)
-			default:
-				// Error, an element cannot have other elements into
+		if n.Type != "" {
+			if n.ID != "" {
+				buffer.WriteString(",")
 			}
-
-		case xml.EndElement:
-			if tt.Name == start.Name {
-				return nil
-			}
-		case xml.CharData:
-			//			fmt.Println("ELEMENT*", string(tt))
+			buffer.WriteString("\"type\":\"" + n.Type + "\"")
 		}
-	}
-}
-
-func (z *Zone) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-
-	z.DecodeAttributes(start)
-
-	for {
-		t, _ := d.Token()
-		switch tt := t.(type) {
-		case xml.StartElement:
-			etype := tt.Name.Local
-			switch etype {
-			case "container":
-				c := &Container{}
-				c.UnmarshalXML(d, tt)
-				z.Containers = append(z.Containers, c)
-			case "element":
-				e := &Element{}
-				e.UnmarshalXML(d, tt)
-				z.Elements = append(z.Elements, e)
-			case "event":
-				e := &Event{}
-				e.UnmarshalXML(d, tt)
-				z.Events = append(z.Events, e)
-			default:
+		count := 0
+		for akey, avalue := range n.attributes {
+			if count > 0 || n.ID != "" || n.Type != "" {
+				buffer.WriteString(",")
 			}
-
-		case xml.EndElement:
-			if tt.Name == start.Name {
-				return nil
+			jsonValue, err := json.Marshal(avalue)
+			if err != nil {
+				return nil, err
 			}
-		case xml.CharData:
-			//			fmt.Println("ZONE*", string(tt))
+			buffer.WriteString(fmt.Sprintf("\"%s\":%s", akey, string(jsonValue)))
+			count++
 		}
+		buffer.WriteString("}")
 	}
-}
 
-func (e *Event) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-
-	e.DecodeAttributes(start)
-
-	for {
-		t, _ := d.Token()
-		switch tt := t.(type) {
-		case xml.EndElement:
-			if tt.Name == start.Name {
-				return nil
+	// children
+	clength := len(n.children)
+	if clength > 0 {
+		buffer.WriteString(",\"children\":[")
+		count := 0
+		for _, cvalue := range n.children {
+			if count > 0 {
+				buffer.WriteString(",")
 			}
-		case xml.CharData:
-			//			fmt.Println("EVENT*", string(tt))
+			jsonValue, err := json.Marshal(cvalue)
+			if err != nil {
+				return nil, err
+			}
+			buffer.WriteString(fmt.Sprintf("%s", string(jsonValue)))
+			count++
 		}
+		buffer.WriteString("]")
 	}
+
+	// data
+	if n.Data != "" {
+		jsonValue, err := json.Marshal(n.Data)
+		if err != nil {
+			return nil, err
+		}
+		buffer.WriteString(",\"data\":" + string(jsonValue))
+	}
+
+	buffer.WriteString("}")
+	return buffer.Bytes(), nil
 }
-*/
