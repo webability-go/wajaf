@@ -220,7 +220,10 @@ func (n *Node) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 				return nil
 			}
 		case xml.CharData:
-			n.Data = string(tt)
+			s := strings.TrimSpace(string(tt))
+			if s != "" {
+				n.Data += string(tt)
+			}
 		}
 	}
 	return nil

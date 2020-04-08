@@ -20,6 +20,10 @@ TO DO:
 Version Changes Control
 =======================
 
+v0.0.6 - 2020-03-08
+------------------------
+- Correction on assigning the node data (concatened, only if some info into it: will ignore spaces and line formatting characters)
+
 v0.0.5 - 2020-03-07
 -----------------------
 - Added UnmarshalXML
