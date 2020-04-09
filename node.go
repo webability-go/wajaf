@@ -34,7 +34,7 @@ type NodeDef interface {
 
 	//	DecodeAttributes(xml.StartElement)
 	UnmarshalXML(*xml.Decoder, xml.StartElement) error
-	MarshalXML(*xml.Encoder) error
+	MarshalXML(*xml.Encoder, xml.StartElement) error
 	UnmarshalJSON([]byte) error
 	MarshalJSON() ([]byte, error)
 }
@@ -229,7 +229,32 @@ func (n *Node) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	return nil
 }
 
-func (n *Node) MarshalXML(*xml.Encoder) error {
+func (n *Node) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+
+	start.Name = xml.Name{"", n.SuperType}
+	attr := []xml.Attr{}
+	if n.Type != "" {
+		attr = append(attr, xml.Attr{xml.Name{"", "type"}, n.Type})
+	}
+	if n.ID != "" {
+		attr = append(attr, xml.Attr{xml.Name{"", "id"}, n.ID})
+	}
+	for akey, avalue := range n.attributes {
+		attr = append(attr, xml.Attr{xml.Name{"", akey}, avalue})
+	}
+	start.Attr = attr
+	e.EncodeToken(start)
+
+	if n.Data != "" {
+		e.EncodeToken(xml.CharData(n.Data))
+	}
+
+	for _, child := range n.children {
+		if err := e.Encode(child); err != nil {
+			return err
+		}
+	}
+	e.EncodeToken(start.End())
 	return nil
 }
 

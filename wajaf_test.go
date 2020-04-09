@@ -49,16 +49,20 @@ func TestWajaf(t *testing.T) {
 
 func TestWajafLoad(t *testing.T) {
 
-	app := NewApplication("manual_application")
+	app := NewApplication("loaded_application")
 
 	data := readfile("testunit/app.code", t)
 	xml.Unmarshal(data, app)
 
 	//	fmt.Printf("XML TO APP: %#v\n", app)
 
-	s, err := json.Marshal(app)
+	x, err := xml.Marshal(app)
 
-	fmt.Println("JSON = ", string(s), err)
+	fmt.Println("XML = ", string(x), err)
+
+	//	s, err := json.Marshal(app)
+
+	//	fmt.Println("JSON = ", string(s), err)
 
 	return
 }
