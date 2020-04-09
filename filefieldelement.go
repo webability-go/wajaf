@@ -4,7 +4,7 @@ type FileFieldElement NodeDef
 
 func NewFileFieldElement(id string) FileFieldElement {
 
-	e := NewNode("element", "filefieldelement")
+	e := NewNode("element", "filefieldElement")
 	e.SetID(id)
 
 	e.RegisterKnownAttributes([]string{"display", "style", "classname", "left", "width", "right", "top", "height", "bottom"})

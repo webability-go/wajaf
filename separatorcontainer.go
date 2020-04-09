@@ -9,7 +9,7 @@ type SeparatorContainer struct {
 func NewSeparatorContainer(id string) *SeparatorContainer {
 
 	c := &SeparatorContainer{
-		NodeDef: NewNode("container", "separatorcontainer"),
+		NodeDef: NewNode("container", "separatorContainer"),
 	}
 	//	c := NewNode("container", "separatorcontainer")
 	c.SetID(id)

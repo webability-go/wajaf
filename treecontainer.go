@@ -4,7 +4,7 @@ type TreeContainer NodeDef
 
 func NewTreeContainer(id string) TreeContainer {
 
-	c := NewNode("container", "treecontainer")
+	c := NewNode("container", "treeContainer")
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener"})

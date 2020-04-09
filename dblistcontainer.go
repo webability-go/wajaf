@@ -4,7 +4,7 @@ type DBListContainer NodeDef
 
 func NewDBListContainer(id string) DBListContainer {
 
-	c := NewNode("container", "dblistcontainer")
+	c := NewNode("container", "dblistContainer")
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener"})

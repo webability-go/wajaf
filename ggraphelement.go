@@ -4,7 +4,7 @@ type GGraphElement NodeDef
 
 func NewGGraphElement(id string) GGraphElement {
 
-	e := NewNode("element", "ggraphelement")
+	e := NewNode("element", "ggraphElement")
 	e.SetID(id)
 
 	e.RegisterKnownAttributes([]string{"display", "style", "classname", "left", "width", "right", "top", "height", "bottom",

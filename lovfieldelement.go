@@ -4,7 +4,7 @@ type LOVFieldElement NodeDef
 
 func NewLOVFieldElement(id string, data string) LOVFieldElement {
 
-	e := NewNode("element", "lovfieldelement")
+	e := NewNode("element", "lovfieldElement")
 	e.SetID(id)
 	e.SetData(data)
 

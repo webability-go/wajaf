@@ -4,7 +4,7 @@ type PaginationElement NodeDef
 
 func NewPaginationElement(id string, data string) PaginationElement {
 
-	e := NewNode("element", "paginationelement")
+	e := NewNode("element", "paginationElement")
 	e.SetID(id)
 	e.SetData(data)
 

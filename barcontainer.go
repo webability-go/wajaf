@@ -4,7 +4,7 @@ type BarContainer NodeDef
 
 func NewBarContainer(id string) BarContainer {
 
-	c := NewNode("container", "barcontainer")
+	c := NewNode("container", "barContainer")
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener"})

@@ -4,7 +4,7 @@ type HTMLElement NodeDef
 
 func NewHTMLElement(id string, data string) HTMLElement {
 
-	e := NewNode("element", "htmlelement")
+	e := NewNode("element", "htmlElement")
 	e.SetID(id)
 	e.SetData(data)
 

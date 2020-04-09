@@ -4,7 +4,7 @@ type HiddenFieldElement NodeDef
 
 func NewHiddenFieldElement(id string, data string) HiddenFieldElement {
 
-	e := NewNode("element", "hiddenfieldelement")
+	e := NewNode("element", "hiddenfieldElement")
 	e.SetID(id)
 	e.SetData(data)
 

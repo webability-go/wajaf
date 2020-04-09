@@ -4,7 +4,7 @@ type GridContainer NodeDef
 
 func NewGridContainer(id string) GridContainer {
 
-	c := NewNode("container", "gridcontainer")
+	c := NewNode("container", "gridContainer")
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener",

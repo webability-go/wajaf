@@ -4,7 +4,7 @@ type GroupContainer NodeDef
 
 func NewGroupContainer(id string) GroupContainer {
 
-	c := NewNode("container", "groupcontainer")
+	c := NewNode("container", "groupContainer")
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener",
