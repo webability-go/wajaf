@@ -20,6 +20,10 @@ TO DO:
 Version Changes Control
 =======================
 
+v0.0.10 - 2020-03-08
+------------------------
+- Added know child "code" to event
+
 v0.0.9 - 2020-03-08
 ------------------------
 - Correction of event node so code is into code node.
