@@ -20,6 +20,10 @@ TO DO:
 Version Changes Control
 =======================
 
+v0.0.9 - 2020-03-08
+------------------------
+- Correction of event node so code is into code node.
+
 v0.0.8 - 2020-03-08
 ------------------------
 - Correction of all the Types of containers and elements to put correct js library name (nameContainer and nameElement syntax)
