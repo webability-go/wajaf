@@ -4,7 +4,7 @@ type TextAreaFieldElement NodeDef
 
 func NewTextAreaFieldElement(id string, data string) TextAreaFieldElement {
 
-	e := NewNode("element", "textareafieldelement")
+	e := NewNode("element", "textareafieldElement")
 	e.SetID(id)
 	e.SetData(data)
 

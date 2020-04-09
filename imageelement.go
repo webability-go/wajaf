@@ -4,7 +4,7 @@ type ImageElement NodeDef
 
 func NewImageElement(id string, src string, data string) ImageElement {
 
-	e := NewNode("element", "imageelement")
+	e := NewNode("element", "imageElement")
 	e.SetID(id)
 	e.SetData(data)
 

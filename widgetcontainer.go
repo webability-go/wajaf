@@ -4,7 +4,7 @@ type WidgetContainer NodeDef
 
 func NewWidgetContainer(id string) WidgetContainer {
 
-	c := NewNode("container", "widgetcontainer")
+	c := NewNode("container", "widgetContainer")
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"id", "type", "id", "display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener",

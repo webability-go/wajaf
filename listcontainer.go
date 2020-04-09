@@ -4,7 +4,7 @@ type ListContainer NodeDef
 
 func NewListContainer(id string) ListContainer {
 
-	c := NewNode("container", "listcontainer")
+	c := NewNode("container", "listContainer")
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener"})

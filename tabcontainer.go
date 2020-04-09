@@ -4,7 +4,7 @@ type TabContainer NodeDef
 
 func NewTabContainer(id string) TabContainer {
 
-	c := NewNode("container", "tabcontainer")
+	c := NewNode("container", "tabContainer")
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener",

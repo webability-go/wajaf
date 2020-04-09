@@ -4,7 +4,7 @@ type FloatingContainer NodeDef
 
 func NewFloatingContainer(id string) FloatingContainer {
 
-	c := NewNode("container", "floatingcontainer")
+	c := NewNode("container", "floatingContainer")
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener"})

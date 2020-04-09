@@ -4,7 +4,7 @@ type DockContainer NodeDef
 
 func NewDockContainer(id string) DockContainer {
 
-	c := NewNode("container", "dockcontainer")
+	c := NewNode("container", "dockContainer")
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener"})

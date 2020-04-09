@@ -4,7 +4,7 @@ type TextElement NodeDef
 
 func NewTextElement(id string, data string) TextElement {
 
-	e := NewNode("element", "textelement")
+	e := NewNode("element", "textElement")
 	e.SetID(id)
 	e.SetData(data)
 

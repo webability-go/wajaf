@@ -4,7 +4,7 @@ type SimpleContainer NodeDef
 
 func NewSimpleContainer(id string) SimpleContainer {
 
-	c := NewNode("container", "simplecontainer")
+	c := NewNode("container", "simpleContainer")
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener"})

@@ -20,6 +20,10 @@ TO DO:
 Version Changes Control
 =======================
 
+v0.0.8 - 2020-03-08
+------------------------
+- Correction of all the Types of containers and elements to put correct js library name (nameContainer and nameElement syntax)
+
 v0.0.7 - 2020-03-08
 ------------------------
 - Added MarshalXML on Node to build XML code from nodes

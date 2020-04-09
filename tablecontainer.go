@@ -4,7 +4,7 @@ type TableContainer NodeDef
 
 func NewTableContainer(id string) TableContainer {
 
-	c := NewNode("container", "tablecontainer")
+	c := NewNode("container", "tableContainer")
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener"})
