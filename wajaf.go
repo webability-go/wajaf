@@ -7,7 +7,7 @@
 package wajaf
 
 // VERSION is the used version nombre of the XCore library.
-const VERSION = "0.0.8"
+const VERSION = "0.0.9"
 
 // LOG is the flag to activate logging on the library.
 // if LOG is set to TRUE, LOG indicates to the XCore libraries to log a trace of functions called, with most important parameters.
