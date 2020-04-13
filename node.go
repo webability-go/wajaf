@@ -292,11 +292,11 @@ func (n *Node) MarshalJSON() ([]byte, error) {
 			buffer.WriteString("\"type\":\"" + n.Type + "\"")
 		}
 		for akey, avalue := range n.attributes {
-			if count > 0 {
-				buffer.WriteString(",")
-			}
 			if avalue == "" {
 				continue
+			}
+			if count > 0 {
+				buffer.WriteString(",")
 			}
 			jsonValue, err := json.Marshal(avalue)
 			if err != nil {
