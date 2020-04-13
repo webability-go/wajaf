@@ -1,10 +1,14 @@
 package wajaf
 
-type WidgetContainer NodeDef
+type WidgetContainer struct {
+	NodeDef
+}
 
-func NewWidgetContainer(id string) WidgetContainer {
+func NewWidgetContainer(id string) *WidgetContainer {
 
-	c := NewNode("container", "widgetContainer")
+	c := &WidgetContainer{
+		NodeDef: NewNode("container", "widgetContainer"),
+	}
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"id", "type", "id", "display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener",
@@ -14,11 +18,17 @@ func NewWidgetContainer(id string) WidgetContainer {
 	return c
 }
 
+func (c *WidgetContainer) NewZone(ztype string, id string) NodeDef {
+	z := NewWidgetZone(ztype, id)
+	c.AddChild(z)
+	return z
+}
+
 type WidgetZone NodeDef
 
-func NewWidgetZone(id string) WidgetZone {
+func NewWidgetZone(ztype string, id string) WidgetZone {
 
-	z := NewNode("zone", "")
+	z := NewNode("zone", ztype)
 	z.SetID(id)
 
 	z.RegisterKnownAttributes([]string{"style", "classname", "application", "params",
@@ -28,11 +38,17 @@ func NewWidgetZone(id string) WidgetZone {
 	return z
 }
 
+func (c *WidgetContainer) NewTemplate(ttype string, name string) NodeDef {
+	z := NewWidgetTemplate(ttype, name)
+	c.AddChild(z)
+	return z
+}
+
 type WidgetTemplate NodeDef
 
-func NewWidgetTemplate(name string) WidgetTemplate {
+func NewWidgetTemplate(ttype string, name string) WidgetTemplate {
 
-	t := NewNode("template", "")
+	t := NewNode("template", ttype)
 
 	t.RegisterKnownAttributes([]string{"name"})
 	t.RegisterKnownChildren([]string{"container", "element"})
@@ -42,11 +58,17 @@ func NewWidgetTemplate(name string) WidgetTemplate {
 	return t
 }
 
+func (c *WidgetContainer) NewDataset(dtype string, data string) NodeDef {
+	z := NewWidgetDataset(dtype, data)
+	c.AddChild(z)
+	return z
+}
+
 type WidgetDataset NodeDef
 
-func NewWidgetDataset(data string) WidgetDataset {
+func NewWidgetDataset(dtype string, data string) WidgetDataset {
 
-	d := NewNode("dataset", "")
+	d := NewNode("dataset", dtype)
 	d.SetData(data)
 
 	return d

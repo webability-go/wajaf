@@ -1,10 +1,14 @@
 package wajaf
 
-type SimpleContainer NodeDef
+type SimpleContainer struct {
+	NodeDef
+}
 
-func NewSimpleContainer(id string) SimpleContainer {
+func NewSimpleContainer(id string) *SimpleContainer {
 
-	c := NewNode("container", "simpleContainer")
+	c := &SimpleContainer{
+		NodeDef: NewNode("container", "simpleContainer"),
+	}
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener"})
@@ -13,11 +17,17 @@ func NewSimpleContainer(id string) SimpleContainer {
 	return c
 }
 
+func (c *SimpleContainer) NewZone(ztype string, id string) NodeDef {
+	z := NewSimpleZone(ztype, id)
+	c.AddChild(z)
+	return z
+}
+
 type SimpleZone NodeDef
 
-func NewSimpleZone(id string) SimpleZone {
+func NewSimpleZone(ztype string, id string) SimpleZone {
 
-	z := NewNode("zone", "")
+	z := NewNode("zone", ztype)
 	z.SetID(id)
 
 	z.RegisterKnownAttributes([]string{"style", "classname", "application", "params"})

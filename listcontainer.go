@@ -1,10 +1,14 @@
 package wajaf
 
-type ListContainer NodeDef
+type ListContainer struct {
+	NodeDef
+}
 
-func NewListContainer(id string) ListContainer {
+func NewListContainer(id string) *ListContainer {
 
-	c := NewNode("container", "listContainer")
+	c := &ListContainer{
+		NodeDef: NewNode("container", "listContainer"),
+	}
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener"})
@@ -13,11 +17,17 @@ func NewListContainer(id string) ListContainer {
 	return c
 }
 
+func (c *ListContainer) NewZone(ztype string, id string) NodeDef {
+	z := NewListZone(ztype, id)
+	c.AddChild(z)
+	return z
+}
+
 type ListZone NodeDef
 
-func NewListZone(id string) ListZone {
+func NewListZone(ztype string, id string) ListZone {
 
-	z := NewNode("zone", "")
+	z := NewNode("zone", ztype)
 	z.SetID(id)
 
 	z.RegisterKnownAttributes([]string{"style", "classname", "application", "params"})
@@ -26,11 +36,17 @@ func NewListZone(id string) ListZone {
 	return z
 }
 
+func (c *ListContainer) NewTemplate(ttype string, name string) NodeDef {
+	z := NewListTemplate(ttype, name)
+	c.AddChild(z)
+	return z
+}
+
 type ListTemplate NodeDef
 
-func NewListTemplate(name string) ListTemplate {
+func NewListTemplate(ttype string, name string) ListTemplate {
 
-	t := NewNode("template", "")
+	t := NewNode("template", ttype)
 
 	t.RegisterKnownAttributes([]string{"name"})
 	t.RegisterKnownChildren([]string{"container", "element"})
@@ -40,11 +56,17 @@ func NewListTemplate(name string) ListTemplate {
 	return t
 }
 
+func (c *ListContainer) NewDataset(dtype string, data string) NodeDef {
+	z := NewListDataset(dtype, data)
+	c.AddChild(z)
+	return z
+}
+
 type ListDataset NodeDef
 
-func NewListDataset(data string) ListDataset {
+func NewListDataset(dtype string, data string) ListDataset {
 
-	d := NewNode("dataset", "")
+	d := NewNode("dataset", dtype)
 	d.SetData(data)
 
 	return d

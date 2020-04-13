@@ -1,10 +1,14 @@
 package wajaf
 
-type TableContainer NodeDef
+type TableContainer struct {
+	NodeDef
+}
 
-func NewTableContainer(id string) TableContainer {
+func NewTableContainer(id string) *TableContainer {
 
-	c := NewNode("container", "tableContainer")
+	c := &TableContainer{
+		NodeDef: NewNode("container", "tableContainer"),
+	}
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener"})
@@ -13,11 +17,17 @@ func NewTableContainer(id string) TableContainer {
 	return c
 }
 
+func (c *TableContainer) NewZone(ztype string, id string) NodeDef {
+	z := NewTableZone(ztype, id)
+	c.AddChild(z)
+	return z
+}
+
 type TableZone NodeDef
 
-func NewTableZone(id string) TableZone {
+func NewTableZone(ztype string, id string) TableZone {
 
-	z := NewNode("zone", "")
+	z := NewNode("zone", ztype)
 	z.SetID(id)
 
 	z.RegisterKnownAttributes([]string{"style", "classname", "application", "params"})

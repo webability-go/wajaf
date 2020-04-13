@@ -11,7 +11,6 @@ func NewSeparatorContainer(id string) *SeparatorContainer {
 	c := &SeparatorContainer{
 		NodeDef: NewNode("container", "separatorContainer"),
 	}
-	//	c := NewNode("container", "separatorcontainer")
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener",
@@ -21,17 +20,17 @@ func NewSeparatorContainer(id string) *SeparatorContainer {
 	return c
 }
 
-func (c *SeparatorContainer) NewZone(id string) NodeDef {
-	z := NewSeparatorZone(id)
+func (c *SeparatorContainer) NewZone(ztype string, id string) NodeDef {
+	z := NewSeparatorZone(ztype, id)
 	c.AddChild(z)
 	return z
 }
 
 type SeparatorZone NodeDef
 
-func NewSeparatorZone(id string) SeparatorZone {
+func NewSeparatorZone(ztype string, id string) SeparatorZone {
 
-	z := NewNode("zone", "")
+	z := NewNode("zone", ztype)
 	z.SetID(id)
 
 	z.RegisterKnownAttributes([]string{"style", "classname", "application", "params",

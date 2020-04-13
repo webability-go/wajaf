@@ -1,10 +1,14 @@
 package wajaf
 
-type TabContainer NodeDef
+type TabContainer struct {
+	NodeDef
+}
 
-func NewTabContainer(id string) TabContainer {
+func NewTabContainer(id string) *TabContainer {
 
-	c := NewNode("container", "tabContainer")
+	c := &TabContainer{
+		NodeDef: NewNode("container", "tabContainer"),
+	}
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener",
@@ -14,11 +18,17 @@ func NewTabContainer(id string) TabContainer {
 	return c
 }
 
+func (c *TabContainer) NewZone(ztype string, id string) NodeDef {
+	z := NewTabZone(ztype, id)
+	c.AddChild(z)
+	return z
+}
+
 type TabZone NodeDef
 
-func NewTabZone(id string) TabZone {
+func NewTabZone(ztype string, id string) TabZone {
 
-	z := NewNode("zone", "")
+	z := NewNode("zone", ztype)
 	z.SetID(id)
 
 	z.RegisterKnownAttributes([]string{"style", "classname", "application", "params",

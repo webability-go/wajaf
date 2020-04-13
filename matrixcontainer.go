@@ -1,10 +1,14 @@
 package wajaf
 
-type MatrixContainer NodeDef
+type MatrixContainer struct {
+	NodeDef
+}
 
-func NewMatrixContainer(id string) MatrixContainer {
+func NewMatrixContainer(id string) *MatrixContainer {
 
-	c := NewNode("container", "matrixContainer")
+	c := &MatrixContainer{
+		NodeDef: NewNode("container", "matrixContainer"),
+	}
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener",
@@ -14,11 +18,17 @@ func NewMatrixContainer(id string) MatrixContainer {
 	return c
 }
 
+func (c *MatrixContainer) NewZone(ztype string, id string) NodeDef {
+	z := NewMatrixZone(ztype, id)
+	c.AddChild(z)
+	return z
+}
+
 type MatrixZone NodeDef
 
-func NewMatrixZone(id string) MatrixZone {
+func NewMatrixZone(ztype string, id string) MatrixZone {
 
-	z := NewNode("zone", "")
+	z := NewNode("zone", ztype)
 	z.SetID(id)
 
 	z.RegisterKnownAttributes([]string{"style", "classname", "application", "params"})
@@ -27,11 +37,17 @@ func NewMatrixZone(id string) MatrixZone {
 	return z
 }
 
+func (c *MatrixContainer) NewTemplate(ttype string, name string) NodeDef {
+	z := NewMatrixTemplate(ttype, name)
+	c.AddChild(z)
+	return z
+}
+
 type MatrixTemplate NodeDef
 
-func NewMatrixTemplate(name string) MatrixTemplate {
+func NewMatrixTemplate(ttype string, name string) MatrixTemplate {
 
-	t := NewNode("template", "")
+	t := NewNode("template", ttype)
 
 	t.RegisterKnownAttributes([]string{"name"})
 	t.RegisterKnownChildren([]string{"container", "element"})
@@ -41,11 +57,17 @@ func NewMatrixTemplate(name string) MatrixTemplate {
 	return t
 }
 
+func (c *MatrixContainer) NewDataset(dtype string, data string) NodeDef {
+	z := NewMatrixDataset(dtype, data)
+	c.AddChild(z)
+	return z
+}
+
 type MatrixDataset NodeDef
 
-func NewMatrixDataset(data string) MatrixDataset {
+func NewMatrixDataset(dtype string, data string) MatrixDataset {
 
-	d := NewNode("dataset", "")
+	d := NewNode("dataset", dtype)
 	d.SetData(data)
 
 	return d

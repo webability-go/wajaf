@@ -1,10 +1,14 @@
 package wajaf
 
-type TreeContainer NodeDef
+type TreeContainer struct {
+	NodeDef
+}
 
-func NewTreeContainer(id string) TreeContainer {
+func NewTreeContainer(id string) *TreeContainer {
 
-	c := NewNode("container", "treeContainer")
+	c := &TreeContainer{
+		NodeDef: NewNode("container", "treeContainer"),
+	}
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener"})
@@ -13,11 +17,17 @@ func NewTreeContainer(id string) TreeContainer {
 	return c
 }
 
+func (c *TreeContainer) NewZone(ztype string, id string) NodeDef {
+	z := NewTreeZone(ztype, id)
+	c.AddChild(z)
+	return z
+}
+
 type TreeZone NodeDef
 
-func NewTreeZone(id string) TreeZone {
+func NewTreeZone(ztype string, id string) TreeZone {
 
-	z := NewNode("zone", "")
+	z := NewNode("zone", ztype)
 	z.SetID(id)
 
 	z.RegisterKnownAttributes([]string{"style", "classname", "application", "params"})
@@ -26,11 +36,17 @@ func NewTreeZone(id string) TreeZone {
 	return z
 }
 
+func (c *TreeContainer) NewTemplate(ttype string, name string) NodeDef {
+	z := NewTreeTemplate(ttype, name)
+	c.AddChild(z)
+	return z
+}
+
 type TreeTemplate NodeDef
 
-func NewTreeTemplate(name string) TreeTemplate {
+func NewTreeTemplate(ttype string, name string) TreeTemplate {
 
-	t := NewNode("template", "")
+	t := NewNode("template", ttype)
 
 	t.RegisterKnownAttributes([]string{"name"})
 	t.RegisterKnownChildren([]string{"container", "element"})
@@ -40,11 +56,17 @@ func NewTreeTemplate(name string) TreeTemplate {
 	return t
 }
 
+func (c *TreeContainer) NewDataset(dtype string, data string) NodeDef {
+	z := NewTreeDataset(dtype, data)
+	c.AddChild(z)
+	return z
+}
+
 type TreeDataset NodeDef
 
-func NewTreeDataset(data string) TreeDataset {
+func NewTreeDataset(dtype string, data string) TreeDataset {
 
-	d := NewNode("dataset", "")
+	d := NewNode("dataset", dtype)
 	d.SetData(data)
 
 	return d

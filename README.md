@@ -20,27 +20,31 @@ TO DO:
 Version Changes Control
 =======================
 
-v0.0.10 - 2020-03-08
+v0.0.11 - 2020-04-13
+------------------------
+- Added parameters to creation of containers, zones, dataset and elements
+
+v0.0.10 - 2020-04-08
 ------------------------
 - Added know child "code" to event
 
-v0.0.9 - 2020-03-08
+v0.0.9 - 2020-04-08
 ------------------------
 - Correction of event node so code is into code node.
 
-v0.0.8 - 2020-03-08
+v0.0.8 - 2020-04-08
 ------------------------
 - Correction of all the Types of containers and elements to put correct js library name (nameContainer and nameElement syntax)
 
-v0.0.7 - 2020-03-08
+v0.0.7 - 2020-04-08
 ------------------------
 - Added MarshalXML on Node to build XML code from nodes
 
-v0.0.6 - 2020-03-08
+v0.0.6 - 2020-04-08
 ------------------------
 - Correction on assigning the node data (concatened, only if some info into it: will ignore spaces and line formatting characters)
 
-v0.0.5 - 2020-03-07
+v0.0.5 - 2020-04-07
 -----------------------
 - Added UnmarshalXML
 - Added MarshalJSON
@@ -48,7 +52,7 @@ v0.0.5 - 2020-03-07
 - Removed messages, events, help attributes of Node
 - Added AddZone() to SeparatorContainer as a new struct extended from DomDef interface to build upon specific functions for specific nodes (it works)
 
-v0.0.4 - 2020-03-06
+v0.0.4 - 2020-04-06
 -----------------------
 - All structures and Application tree implemented in GO
 - Full wajaf JS available in js directory

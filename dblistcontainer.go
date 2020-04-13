@@ -1,10 +1,14 @@
 package wajaf
 
-type DBListContainer NodeDef
+type DBListContainer struct {
+	NodeDef
+}
 
-func NewDBListContainer(id string) DBListContainer {
+func NewDBListContainer(id string) *DBListContainer {
 
-	c := NewNode("container", "dblistContainer")
+	c := &DBListContainer{
+		NodeDef: NewNode("container", "dblistContainer"),
+	}
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener"})
@@ -13,11 +17,17 @@ func NewDBListContainer(id string) DBListContainer {
 	return c
 }
 
+func (c *DBListContainer) NewZone(ztype string, id string) NodeDef {
+	z := NewDBListZone(ztype, id)
+	c.AddChild(z)
+	return z
+}
+
 type DBListZone NodeDef
 
-func NewDBListZone(id string) DBListZone {
+func NewDBListZone(id string, ztype string) DBListZone {
 
-	z := NewNode("zone", "")
+	z := NewNode("zone", ztype)
 	z.SetID(id)
 
 	z.RegisterKnownAttributes([]string{"style", "classname", "application", "params"})
@@ -26,11 +36,17 @@ func NewDBListZone(id string) DBListZone {
 	return z
 }
 
+func (c *DBListContainer) NewTemplate(ttype string, name string) NodeDef {
+	z := NewDBListTemplate(ttype, name)
+	c.AddChild(z)
+	return z
+}
+
 type DBListTemplate NodeDef
 
-func NewDBListTemplate(name string) DBListTemplate {
+func NewDBListTemplate(ttype string, name string) DBListTemplate {
 
-	t := NewNode("template", "")
+	t := NewNode("template", ttype)
 
 	t.RegisterKnownAttributes([]string{"name"})
 	t.RegisterKnownChildren([]string{"container", "element"})
@@ -40,11 +56,17 @@ func NewDBListTemplate(name string) DBListTemplate {
 	return t
 }
 
+func (c *DBListContainer) NewDataset(dtype string, data string) NodeDef {
+	z := NewDBListDataset(dtype, data)
+	c.AddChild(z)
+	return z
+}
+
 type DBListDataset NodeDef
 
-func NewDBListDataset(data string) DBListDataset {
+func NewDBListDataset(dtype string, data string) DBListDataset {
 
-	d := NewNode("dataset", "")
+	d := NewNode("dataset", dtype)
 	d.SetData(data)
 
 	return d
