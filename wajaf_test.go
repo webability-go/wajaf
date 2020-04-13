@@ -24,19 +24,19 @@ func TestWajaf(t *testing.T) {
 	c1.SetAttributes(Attributes{"width": "max", "height": "max", "mode": "vertical", "auto": "yes"})
 	app.AddChild(c1)
 
-	z0 := c1.NewZone("z0")
+	z0 := c1.NewZone("", "z0")
 	z0.AddChild(NewHTMLElement("", "HTML <h1>ELEMENT</h1> CONTENT"))
 
-	z1 := NewSeparatorZone("z1")
+	z1 := NewSeparatorZone("", "z1")
 	z1.AddHelp("tooltip on z1", "z1 help", "You can use z1 clicking on it")
 	z1.AddMessage("messageid", "The message is any string with specific tag name")
 
 	c1.AddChild(z1)
 
-	z2 := NewSeparatorZone("z2")
+	z2 := NewSeparatorZone("", "z2")
 	c1.AddChild(z2)
 
-	e1 := NewCodeElement("code1")
+	e1 := NewCodeElement("code1", "function test() { alert('Wajaf test'); }")
 	app.AddChild(e1)
 
 	app.AddEvent("start", "function() { alert('Wajaf working'); }")

@@ -8,7 +8,7 @@ func NewApplication(id string) Application {
 	app.SetID(id)
 
 	app.RegisterKnownAttributes([]string{"id", "enforce", "style"})
-	app.RegisterKnownChildren([]string{"container", "element"})
+	app.RegisterKnownChildren([]string{"container", "element", "event"})
 
 	return app
 }

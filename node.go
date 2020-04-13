@@ -136,11 +136,17 @@ func (n *Node) GetAttributes() Attributes {
 }
 
 func (n *Node) AddHelp(tooltip string, title string, description string) {
+	if tooltip == "" && title == "" && description == "" {
+		return
+	}
 	h := NewHelp(tooltip, title, description)
 	n.children = append(n.children, h)
 }
 
 func (n *Node) AddMessage(name string, value string) {
+	if value == "" {
+		return
+	}
 	m := NewMessage(name, value)
 	n.children = append(n.children, m)
 }
@@ -174,6 +180,7 @@ func (n *Node) String() string {
 	for _, val := range n.children {
 		sdata = append(sdata, fmt.Sprintf("%v", val))
 	}
+	sdata = append(sdata, n.Data)
 	return "{" + strings.Join(sdata, " ") + "}"
 }
 
@@ -185,6 +192,7 @@ func (n *Node) GoString() string {
 	for _, val := range n.children {
 		sdata = append(sdata, fmt.Sprintf("%#v", val))
 	}
+	sdata = append(sdata, n.Data)
 	return "#{" + strings.Join(sdata, " ") + "}"
 }
 
@@ -284,6 +292,9 @@ func (n *Node) MarshalJSON() ([]byte, error) {
 		for akey, avalue := range n.attributes {
 			if count > 0 || n.ID != "" || n.Type != "" {
 				buffer.WriteString(",")
+			}
+			if avalue == "" {
+				continue
 			}
 			jsonValue, err := json.Marshal(avalue)
 			if err != nil {

@@ -1,28 +1,38 @@
 package wajaf
 
-type ExpandableContainer NodeDef
+type ExpandableContainer struct {
+	NodeDef
+}
 
-func NewExpandableContainer(id string) ExpandableContainer {
+func NewExpandableContainer(id string) *ExpandableContainer {
 
-	c := NewNode("container", "expandableContainer")
+	c := &ExpandableContainer{
+		NodeDef: NewNode("container", "expandableContainer"),
+	}
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener"})
-	c.RegisterKnownChildren([]string{"zone"})
+	c.RegisterKnownChildren([]string{"zone", "event", "help"})
 
 	return c
 }
 
+func (c *ExpandableContainer) NewZone(ztype string, id string) NodeDef {
+	z := NewExpandableZone(ztype, id)
+	c.AddChild(z)
+	return z
+}
+
 type ExpandableZone NodeDef
 
-func NewExpandableZone(id string) ExpandableZone {
+func NewExpandableZone(ztype string, id string) ExpandableZone {
 
-	z := NewNode("zone", "")
+	z := NewNode("zone", ztype)
 	z.SetID(id)
 
 	z.RegisterKnownAttributes([]string{"style", "classname", "application", "params",
 		"title", "closed", "classnameselectoropen", "classnameselectorclose", "display"})
-	z.RegisterKnownChildren([]string{"container", "element"})
+	z.RegisterKnownChildren([]string{"container", "element", "event", "help"})
 
 	return z
 }
