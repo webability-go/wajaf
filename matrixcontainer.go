@@ -13,7 +13,7 @@ func NewMatrixContainer(id string) *MatrixContainer {
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener",
 		"columns", "mode", "classnamezone", "preidbutton", "defaultwidth", "defaultheight"})
-	c.RegisterKnownChildren([]string{"zone", "template", "dataset"})
+	c.RegisterKnownChildren([]string{"zone", "template", "dataset", "event", "help"})
 
 	return c
 }
@@ -32,7 +32,7 @@ func NewMatrixZone(ztype string, id string) MatrixZone {
 	z.SetID(id)
 
 	z.RegisterKnownAttributes([]string{"style", "classname", "application", "params"})
-	z.RegisterKnownChildren([]string{"container", "element"})
+	z.RegisterKnownChildren([]string{"container", "element", "event", "help"})
 
 	return z
 }

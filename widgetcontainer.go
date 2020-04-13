@@ -13,7 +13,7 @@ func NewWidgetContainer(id string) *WidgetContainer {
 
 	c.RegisterKnownAttributes([]string{"id", "type", "id", "display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener",
 		"columns", "classnamezone"})
-	c.RegisterKnownChildren([]string{"zone", "event", "template", "dataset"})
+	c.RegisterKnownChildren([]string{"zone", "event", "template", "dataset", "event", "help"})
 
 	return c
 }
@@ -33,7 +33,7 @@ func NewWidgetZone(ztype string, id string) WidgetZone {
 
 	z.RegisterKnownAttributes([]string{"style", "classname", "application", "params",
 		"title", "size", "column", "closeable", "sizeable", "maskable", "editable", "editor"})
-	z.RegisterKnownChildren([]string{"container", "element"})
+	z.RegisterKnownChildren([]string{"container", "element", "event", "help"})
 
 	return z
 }

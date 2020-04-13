@@ -13,7 +13,7 @@ func NewTabContainer(id string) *TabContainer {
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener",
 		"mode"})
-	c.RegisterKnownChildren([]string{"zone"})
+	c.RegisterKnownChildren([]string{"zone", "event", "help"})
 
 	return c
 }
@@ -33,7 +33,7 @@ func NewTabZone(ztype string, id string) TabZone {
 
 	z.RegisterKnownAttributes([]string{"style", "classname", "application", "params",
 		"title"})
-	z.RegisterKnownChildren([]string{"container", "element"})
+	z.RegisterKnownChildren([]string{"container", "element", "event", "help"})
 
 	return z
 }

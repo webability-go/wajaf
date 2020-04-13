@@ -12,7 +12,7 @@ func NewDBListContainer(id string) *DBListContainer {
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener"})
-	c.RegisterKnownChildren([]string{"zone", "template", "dataset"})
+	c.RegisterKnownChildren([]string{"zone", "template", "dataset", "event", "help"})
 
 	return c
 }
@@ -31,7 +31,7 @@ func NewDBListZone(id string, ztype string) DBListZone {
 	z.SetID(id)
 
 	z.RegisterKnownAttributes([]string{"style", "classname", "application", "params"})
-	z.RegisterKnownChildren([]string{"container", "element"})
+	z.RegisterKnownChildren([]string{"container", "element", "event", "help"})
 
 	return z
 }

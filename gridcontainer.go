@@ -13,7 +13,7 @@ func NewGridContainer(id string) *GridContainer {
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener",
 		"pagination", "maxperpage", "mode", "selectable", "insertable", "deletable", "change", "params"})
-	c.RegisterKnownChildren([]string{"zone", "template", "dataset"})
+	c.RegisterKnownChildren([]string{"zone", "template", "dataset", "event", "help"})
 
 	return c
 }
@@ -33,7 +33,7 @@ func NewGridZone(ztype string, id string) GridZone {
 
 	z.RegisterKnownAttributes([]string{"style", "classname", "application", "params",
 		"title", "application", "size", "sizemin", "sizemax", "selectable", "sortable", "sizeable", "maskable", "editable", "type", "editor", "render", "format", "align"})
-	z.RegisterKnownChildren([]string{"container", "element"})
+	z.RegisterKnownChildren([]string{"container", "element", "event", "help"})
 
 	return z
 }

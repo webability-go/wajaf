@@ -16,7 +16,7 @@ func NewGroupContainer(id string) *GroupContainer {
 		"varmode", "varorder", "varkey",
 		"mode", "authmodes", "key"})
 	//	c.RegisterKnownMessages([]string{"alertmessage", "servermessage", "titleinsert", "titleupdate", "titledelete", "titleview", "insertok", "updateok", "deleteok"})
-	c.RegisterKnownChildren([]string{"zone", "dataset"})
+	c.RegisterKnownChildren([]string{"zone", "dataset", "event", "help"})
 
 	return c
 }
@@ -35,7 +35,7 @@ func NewGroupZone(ztype string, id string) GroupZone {
 	z.SetID(id)
 
 	z.RegisterKnownAttributes([]string{"style", "classname", "application", "params"})
-	z.RegisterKnownChildren([]string{"container", "element"})
+	z.RegisterKnownChildren([]string{"container", "element", "event", "help"})
 
 	return z
 }

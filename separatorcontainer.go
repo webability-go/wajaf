@@ -15,7 +15,7 @@ func NewSeparatorContainer(id string) *SeparatorContainer {
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener",
 		"mode", "auto"})
-	c.RegisterKnownChildren([]string{"zone"})
+	c.RegisterKnownChildren([]string{"zone", "event", "help"})
 
 	return c
 }
@@ -35,7 +35,7 @@ func NewSeparatorZone(ztype string, id string) SeparatorZone {
 
 	z.RegisterKnownAttributes([]string{"style", "classname", "application", "params",
 		"size", "classnameseparator", "display"})
-	z.RegisterKnownChildren([]string{"container", "element"})
+	z.RegisterKnownChildren([]string{"container", "element", "event", "help"})
 
 	return z
 }

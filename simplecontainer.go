@@ -12,7 +12,7 @@ func NewSimpleContainer(id string) *SimpleContainer {
 	c.SetID(id)
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener"})
-	c.RegisterKnownChildren([]string{"zone"})
+	c.RegisterKnownChildren([]string{"zone", "event", "help"})
 
 	return c
 }
@@ -31,7 +31,7 @@ func NewSimpleZone(ztype string, id string) SimpleZone {
 	z.SetID(id)
 
 	z.RegisterKnownAttributes([]string{"style", "classname", "application", "params"})
-	z.RegisterKnownChildren([]string{"container", "element"})
+	z.RegisterKnownChildren([]string{"container", "element", "event", "help"})
 
 	return z
 }
