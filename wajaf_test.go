@@ -36,7 +36,7 @@ func TestWajaf(t *testing.T) {
 	z2 := NewSeparatorZone("", "z2")
 	c1.AddChild(z2)
 
-	e1 := NewCodeElement("code1")
+	e1 := NewCodeElement("code1", "function test() { alert('Wajaf test'); }")
 	app.AddChild(e1)
 
 	app.AddEvent("start", "function() { alert('Wajaf working'); }")

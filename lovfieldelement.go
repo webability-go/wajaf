@@ -2,11 +2,10 @@ package wajaf
 
 type LOVFieldElement NodeDef
 
-func NewLOVFieldElement(id string, data string) LOVFieldElement {
+func NewLOVFieldElement(id string) LOVFieldElement {
 
 	e := NewNode("element", "lovfieldElement")
 	e.SetID(id)
-	e.SetData(data)
 
 	e.RegisterKnownAttributes([]string{"display", "style", "classname", "left", "width", "right", "top", "height", "bottom",
 		"size", "visible", "info", "disabled", "readonly", "notnull", "helpmode"})
