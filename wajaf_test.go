@@ -63,6 +63,12 @@ func TestWajafLoad(t *testing.T) {
 	//	s, err := json.Marshal(app)
 
 	//	fmt.Println("JSON = ", string(s), err)
+	json, err := json.Marshal(app)
+	if err != nil {
+		fmt.Println("error json marshal", err)
+		return
+	}
+	fmt.Println("JSON CODE", string(json))
 
 	return
 }

@@ -278,19 +278,21 @@ func (n *Node) MarshalJSON() ([]byte, error) {
 	length := len(n.attributes)
 	candidate := length != 0 || n.ID != "" || n.Type != ""
 	if candidate {
+		count := 0
 		buffer.WriteString(",\"attributes\":{")
 		if n.ID != "" {
+			count++
 			buffer.WriteString("\"id\":\"" + n.ID + "\"")
 		}
 		if n.Type != "" {
-			if n.ID != "" {
+			if count > 0 {
 				buffer.WriteString(",")
 			}
+			count++
 			buffer.WriteString("\"type\":\"" + n.Type + "\"")
 		}
-		count := 0
 		for akey, avalue := range n.attributes {
-			if count > 0 || n.ID != "" || n.Type != "" {
+			if count > 0 {
 				buffer.WriteString(",")
 			}
 			if avalue == "" {
@@ -309,7 +311,8 @@ func (n *Node) MarshalJSON() ([]byte, error) {
 	// children
 	clength := len(n.children)
 	if clength > 0 {
-		buffer.WriteString(",\"children\":[")
+		buffer.WriteString(",")
+		buffer.WriteString("\"children\":[")
 		count := 0
 		for _, cvalue := range n.children {
 			if count > 0 {
@@ -331,7 +334,8 @@ func (n *Node) MarshalJSON() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		buffer.WriteString(",\"data\":" + string(jsonValue))
+		buffer.WriteString(",")
+		buffer.WriteString("\"data\":" + string(jsonValue))
 	}
 
 	buffer.WriteString("}")
