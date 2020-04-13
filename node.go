@@ -339,6 +339,5 @@ func (n *Node) MarshalJSON() ([]byte, error) {
 	}
 
 	buffer.WriteString("}")
-	fmt.Println("JSON:", buffer.String())
 	return buffer.Bytes(), nil
 }
