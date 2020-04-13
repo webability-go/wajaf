@@ -20,6 +20,10 @@ TO DO:
 Version Changes Control
 =======================
 
+v0.0.12 - 2020-04-13
+------------------------
+- Correction on node: JSON Marshal, wrong ',' calculations
+
 v0.0.11 - 2020-04-13
 ------------------------
 - Added parameters to creation of containers, zones, dataset and elements
