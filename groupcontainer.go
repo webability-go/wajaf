@@ -7,8 +7,10 @@ func NewGroupContainer(id string) GroupContainer {
 	c := NewNode("container", "groupContainer")
 	c.SetID(id)
 
-	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone", "left", "width", "right", "top", "height", "bottom", "haslistener",
-		"mode", "authmodes", "varkey", "key", "varorder", "varmode"})
+	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone",
+		"left", "width", "right", "top", "height", "bottom", "haslistener",
+		"varmode", "varorder", "varkey",
+		"mode", "authmodes", "key"})
 	//	c.RegisterKnownMessages([]string{"alertmessage", "servermessage", "titleinsert", "titleupdate", "titledelete", "titleview", "insertok", "updateok", "deleteok"})
 	c.RegisterKnownChildren([]string{"zone", "dataset"})
 
