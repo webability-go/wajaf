@@ -20,7 +20,11 @@ TO DO:
 Version Changes Control
 =======================
 
-v0.0.12 - 2020-04-13
+v0.0.14 - 2020-04-13
+------------------------
+- Correction on node: HELP as messages, not help children
+
+v0.0.13 - 2020-04-13
 ------------------------
 - Correction on node: JSON Marshal, wrong ',' calculations (again)
 
