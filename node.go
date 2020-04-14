@@ -136,15 +136,26 @@ func (n *Node) GetAttributes() Attributes {
 }
 
 func (n *Node) AddHelp(tooltip string, title string, description string) {
-	if tooltip == "" && title == "" && description == "" {
-		return
+	if tooltip != "" {
+		m := NewMessage("helpsummary", tooltip)
+		n.children = append(n.children, m)
 	}
+	if title != "" {
+		m := NewMessage("helptitle", title)
+		n.children = append(n.children, m)
+	}
+	if description != "" {
+		m := NewMessage("helpdescription", description)
+		n.children = append(n.children, m)
+	}
+	return
+
 	h := NewHelp(tooltip, title, description)
 	n.children = append(n.children, h)
 }
 
 func (n *Node) AddMessage(name string, value string) {
-	if value == "" {
+	if name == "" || value == "" {
 		return
 	}
 	m := NewMessage(name, value)
@@ -152,6 +163,9 @@ func (n *Node) AddMessage(name string, value string) {
 }
 
 func (n *Node) AddEvent(name string, code string) {
+	if name == "" || code == "" {
+		return
+	}
 	e := NewEvent(name, code)
 	n.children = append(n.children, e)
 }
