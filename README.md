@@ -20,6 +20,10 @@ TO DO:
 Version Changes Control
 =======================
 
+v0.0.15 - 2020-04-26
+------------------------
+- JS code is now embedded into GO code in resources directory. embed.go is added to generate embedded code, but is not compilable with the libraries.
+
 v0.0.14 - 2020-04-13
 ------------------------
 - Correction on node: HELP as messages, not help children
