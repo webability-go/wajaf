@@ -67,6 +67,7 @@ WA.Elements.buttonElement = function(domNodeFather, domID, code, listener)
         case 'titleinsert': self.title[1] = code.children[i].data; break;
         case 'titleupdate': self.title[2] = code.children[i].data; break;
         case 'titledelete': self.title[3] = code.children[i].data; break;
+        case 'titleview': self.title[4] = code.children[i].data; break;
       }
     }
   }

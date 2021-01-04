@@ -730,3 +730,5 @@ WA.browser.setInnerHTML = function(node, content)
     node.innerHTML = content;
   }
 }
+
+WA.browser();

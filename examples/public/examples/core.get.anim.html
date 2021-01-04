@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <!-- Generic browser family -->
+  <title>WAJAF Demos, a WebAbility&reg; Network Project</title>
+  <meta http-equiv="PRAGMA" content="NO-CACHE" />
+  <meta http-equiv="Expires" content="-1" />
+
+  <meta name="Keywords" content="WAJAF, WebAbility" />
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="Charset" content="UTF-8" />
+  <meta name="Language" content="en" />
+  <link rel="stylesheet" href="/skins/css/wajaf.css" type="text/css" />
+
+</head>
+<body>
+
+<div class="container">
+
+<a href="/examples/core.get.html" class="back">&#xAB; Back to the index</a><br />
+<br />
+
+<h1>WA.get, Examples of Animation of nodes</h1>
+
+<script language="javascript" type="text/javascript" src="/js/core.js"></script>
+<script language="javascript" type="text/javascript" src="/js/corebrowser.js"></script>
+<script language="javascript" type="text/javascript" src="/js/eventManager.js"></script>
+<script language="javascript" type="text/javascript" src="/js/animManager.js"></script>
+
+<br />
+There are 9 basic animations methods:<br />
+Every animation method has a speed (in milliseconds, or the values 'slow', 'medium', 'fast'), and a callback function, called when the animation ends, or when a special event happens.<br />
+<br />
+- WA.get(filter).fadeIn(speed, callback): fade in the nodes. The fade in applies directly on the opacity of the node. If the node is hidden, not visible or so, it will become visible. Only 'display' and 'opacity' are modified during the operation.<br />
+- WA.get(filter).fadeOut(speed, callback): fade out the nodes. The fade out applies directly on the opacity of the node. If the node is visible, it will become invisible. Only 'display' and 'opacity' are modified during the operation.<br />
+- WA.get(filter).openV(speed, callback, height)<br />
+- WA.get(filter).closeV(speed, callback, height)<br />
+- WA.get(filter).openH(speed, callback, width)<br />
+- WA.get(filter).closeH(speed, callback, width)<br />
+- WA.get(filter).open(speed, callback, width, height)<br />
+- WA.get(filter).close(speed, callback, width, height)<br />
+- WA.get(filter).move(speed, leftinit, topinit, callback, leftend, topend)<br />
+<br />
+There is also a generic animation method:<br />
+WA.get(filter).anim(speed, callback): will animate all the found nodes with the specified script.<br />
+<br />
+
+Let's play with some objects:<br />
+
+<div class="code">
+  function test1()
+  {
+    WA.get('#d1').closeV(1000);
+  }
+
+  function test2()
+  {
+    WA.get('#d1').openV(1000, null, 50);
+  }
+</div>
+<span class="button" onclick="test1();">anim every type</span>
+<span class="button" onclick="test2();">reverse anim every type</span>
+<span class="button" onclick="test3();">anim by classname</span>
+<div id="test1" class="result" style="position: relative; height: 200px;">
+  <div id="d1" class="cd1" style="position: absolute; top: 50px; left: 50px; height: 50px; width: 50px; background-color: red;"></div>
+  <div id="d2" class="cd2" style="position: absolute; top: 70px; left: 120px; height: 50px; width: 50px; background-color: green;"></div>
+  <div id="d3" class="cd3" style="position: absolute; top: 90px; left: 190px; height: 50px; width: 50px; background-color: blue;"></div>
+  <div id="d4" class="cd1" style="position: absolute; top: 110px; left: 260px; height: 50px; width: 50px; background-color: #ffaa00;"></div>
+  <div id="d5" class="cd2" style="position: absolute; top: 50px; left: 330px; height: 50px; width: 50px; background-color: red;"></div>
+  <div id="d6" class="cd3" style="position: absolute; top: 70px; left: 400px; height: 50px; width: 50px; background-color: green;"></div>
+  <div id="d7" class="cd1" style="position: absolute; top: 90px; left: 470px; height: 50px; width: 50px; background-color: blue;"></div>
+  <div id="d8" class="cd2" style="position: absolute; top: 110px; left: 540px; height: 50px; width: 50px; background-color: #ffaa00;"></div>
+  <div id="d9" class="cd3" style="position: absolute; top: 50px; left: 610px; height: 50px; width: 50px; background-color: red;"></div>
+  <div id="d10" class="cd1" style="position: absolute; top: 70px; left: 680px; height: 50px; width: 50px; background-color: green;"></div>
+</div>
+
+<br />
+
+<script type="text/javascript">
+
+function callback(event)
+{
+  console.log(event);
+}
+
+function test1()
+{
+  WA.get('#d1').fadeIn(1000, callback);
+  WA.get('#d2').fadeOut(1000, callback);
+  WA.get('#d3').openV(1000, callback, 50);
+  WA.get('#d4').closeV(1000, callback, 50);
+  WA.get('#d5').openH(1000, callback, 50);
+  WA.get('#d6').closeH(1000, callback, 50);
+  WA.get('#d7').open(1000, callback, 50, 50);
+  WA.get('#d8').close(1000, callback, 50, 50);
+  WA.get('#d9').move(1000, 660, 100, callback, 610, 50);
+  WA.get('#d10').anim(1000, callback);
+}
+
+function test2()
+{
+  WA.get('#d1').fadeOut(1000, callback);
+  WA.get('#d2').fadeIn(1000, callback);
+  WA.get('#d3').closeV(1000, callback, 50);
+  WA.get('#d4').openV(1000, callback, 50);
+  WA.get('#d5').closeH(1000, callback, 50);
+  WA.get('#d6').openH(1000, callback, 50);
+  WA.get('#d7').close(1000, callback, 50, 50);
+  WA.get('#d8').open(1000, callback, 50, 50);
+  WA.get('#d9').move(1000, 610, 50, callback, 660, 100);
+  WA.get('#d10').anim(1000, callback);
+}
+
+function test3()
+{
+  WA.get('.cd1').fadeOut(1000, callback);
+  WA.get('.cd2').fadeIn(1000, callback);
+  WA.get('.cd3').openV(1000, callback, 50);
+
+}
+
+</script>
+
+<br /><br />
+
+<a href="/examples/core.get.html" class="back">&#xAB; Back to the index</a><br />
+
+</body>
+</html>
