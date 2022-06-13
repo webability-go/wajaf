@@ -303,10 +303,10 @@ WA.Containers.tabContainer = function(domNodeFather, domID, code, listener)
   {
     var ldomID = WA.parseID(id, self.xdomID);
     if (!ldomID)
-      throw 'Error: the zone id is not valid in tabContainer.showZone: id=' + id;
+      throw 'Error: the zone id is not valid in tabContainer.destroyone: id=' + id;
     // check the zone does not exists YET !
     if (!self.tabzones[ldomID[2]])
-      throw 'Error: the zone does not exists in tabContainer.showZone: id=' + ldomID[2];
+      throw 'Error: the zone does not exists in tabContainer.destroyZone: id=' + ldomID[2];
 
     // 2. call event predestroy
     if (!self.callEvent('predestroy', {id:ldomID[2]}) )
@@ -696,7 +696,7 @@ WA.Containers.tabContainer.tabSelector = function(maincontainer, domID, domIDCon
     }
     else
       self.domNodeClose.style.display = 'none';
-      
+
     if (self.father.changeorder)
     {
       self.domNodeMove.style.display = '';

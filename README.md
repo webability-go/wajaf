@@ -4,10 +4,10 @@
 [![GoDoc](https://godoc.org/github.com/webability-go/wajaf?status.png)](https://godoc.org/github.com/webability-go/wajaf)
 [![GolangCI](https://golangci.com/badges/github.com/webability-go/wajaf.svg)](https://golangci.com)
 
-WAJAF for GO v1
+WAJAF for GO v0.1
 =============================
 
-WAJAF is the WebAbility Javascript Application Framework. It is a synchronized GO-Server <=> JS-Client framework to developp organized web applications.
+WAJAF is the WebAbility Javascript Application Framework. It is a synchronized GO-Server <=> JS-Client framework to develop organized web applications.
 
 GO manuals are available on godoc.org [![GoDoc](https://godoc.org/github.com/webability-go/wajaf?status.png)](https://godoc.org/github.com/webability-go/wajaf)
 
@@ -109,6 +109,19 @@ TO DO:
 
 Version Changes Control
 =======================
+
+v0.1.2 - 2021-10-04
+------------------------
+- Correction of isEmpty function of the core, to give true is the Date is empty or the String() is empty.
+- The simple javascript examples are now working on a Xamboo Go Server (Presentation, js.go corrected, all libraries working)
+
+
+v0.1.1 - 2021-02-26
+------------------------
+- gridContainer.js has been modified to support large list of daat and put correct information metada data.
+- node.go enhanced to detect wrong XML formats and return an error
+- Added xml.Comment into node XML unmarshall to consider it
+
 
 v0.1.0 - 2020-12-22
 ------------------------

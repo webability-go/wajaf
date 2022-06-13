@@ -68,21 +68,30 @@ WA.Elements.lovfieldElement = function(fatherNode, domID, code, listener)
   this.errors = {};
   this.errormessages = {};
   this.firstview = true; // set to false when the field has been touched/modified. Used to know if we put the errors
+  this.checkcode = null;
 
-  for (var i = 0, l = code.children.length; i < l; i++)
+  if (code.children)
   {
-    switch (code.children[i].tag)
+    for (var i = 0, l = code.children.length; i < l; i++)
     {
-      case 'defaultvalue': this.defaultvalue = code.children[i].data?code.children[i].data:''; break;
-      case 'helpdescription': this.helpmessage = code.children[i].data; break;
-      case 'statusnotnull': this.errormessages.statusnotnull = code.children[i].data; this.errors.statusnotnull = false; break;
-      case 'statuscheck': this.errormessages.statuscheck = code.children[i].data; this.errors.statuscheck = false; break;
-      case 'options':
-        for (var j = 0, m = code.children[i].children.length; j < m; j++)
-        {
-          self.options[this.code.children[i].children[j].attributes.key] = this.code.children[i].children[j].data;
-        }
-        break;
+      switch (code.children[i].tag)
+      {
+        case 'defaultvalue': this.defaultvalue = code.children[i].data?code.children[i].data:''; break;
+        case 'helpdescription': this.helpmessage = code.children[i].data; break;
+        case 'statusnotnull': this.errormessages.statusnotnull = code.children[i].data; this.errors.statusnotnull = false; break;
+        case 'statuscheck': this.errormessages.statuscheck = code.children[i].data; this.errors.statuscheck = false; break;
+        case 'code':
+          this.checkcode = code.children[i].data;
+        case 'options':
+          if (code.children[i].children)
+          {
+            for (var j = 0, m = code.children[i].children.length; j < m; j++)
+            {
+              self.options[this.code.children[i].children[j].attributes.key] = this.code.children[i].children[j].data;
+            }
+          }
+          break;
+      }
     }
   }
   // NODES
@@ -99,9 +108,6 @@ WA.Elements.lovfieldElement = function(fatherNode, domID, code, listener)
   if (this.size)
     this.domNodeField.style.width = this.size+'px';
   this.domNode.appendChild(this.domNodeField);
-
-  this.domNodeCount = WA.createDomNode('span', domID+'_count', 'count');
-  this.domNode.appendChild(this.domNodeCount);
 
   this.domNodeHelp = WA.createDomNode('p', domID+'_help', 'help');
   this.domNode.appendChild(this.domNodeHelp);
@@ -194,7 +200,6 @@ WA.Elements.lovfieldElement = function(fatherNode, domID, code, listener)
     {
       self.status = 0;
       self.domNodeError.innerHTML = '';
-      self.domNodeCount.innerHTML = '';
       return;
     }
 
@@ -218,16 +223,15 @@ WA.Elements.lovfieldElement = function(fatherNode, domID, code, listener)
       self.status = 3;
       return;
     }
-    if (self.domNodeField.disabled == true)
-      self.domNodeField.disabled == false;
-    if (self.domNodeField.readOnly == true)
-      self.domNodeField.readOnly == false;
+//    if (self.domNodeField.disabled == true)
+//      self.domNodeField.disabled = false;
+//    if (self.domNodeField.readOnly == true)
+//      self.domNodeField.readOnly = false;
     var value = self.domNodeField.value;
     if (self.value != undefined && value == self.value && self.mode != 1)
     {
       self.status = 0;
       self.domNodeError.innerHTML = '';
-      self.domNodeCount.innerHTML = '';
       return;
     }
 
@@ -238,44 +242,9 @@ WA.Elements.lovfieldElement = function(fatherNode, domID, code, listener)
       self.errors.statusnotnull = true;
     }
 
-    if (self.format && value.match(self.format) == null)
-    {
-      self.status = 2;
-      self.errors.statusbadformat = true;
-    }
-    if (self.minlength && value.length < self.minlength)
-    {
-      self.status = 2;
-      self.errors.statustooshort = true;
-    }
-    if (self.maxlength && value.length > self.maxlength)
-    {
-      self.status = 2;
-      self.errors.statustoolong = true;
-    }
-    if (self.maxwords || self.minwords)
-    {
-      var text = value;
-      text = text.replace(/^[ ]+/, "");
-      text = text.replace(/[ ]+$/, "");
-      text = text.replace(/[ ]+/g, " ");
-      text = text.replace(/[\n]+/g, " ");
-      var numpalabras = (text.length>0?text.split(" ").length:0);
-      if (numpalabras < self.minwords)
-      {
-        self.status = 2;
-        self.errors.statustoofewwords = true;
-      }
-      if (numpalabras > self.maxwords)
-      {
-        self.status = 2;
-        self.errors.statustoomanywords = true;
-      }
-      self.domNodeCount.innerHTML = numpalabras + '/' + value.length;
-    }
     // user own checks
-    if (self.code[0] != undefined && self.code[0].tag != undefined && self.code[0].tag == 'check')
-      eval(self.code[0].data);
+    if (self.checkcode)
+      eval(self.checkcode);
   }
 
   this.checkClass = checkClass;
@@ -364,7 +333,6 @@ WA.Elements.lovfieldElement = function(fatherNode, domID, code, listener)
 
     self.domNodeHelp.style.display = (self.help[mode]?'':'none');
     self.domNodeField.style.display = (self.info[mode]?'none':'');
-    self.domNodeCount.style.display = (self.info[mode]?'none':'');
     self.domNodeError.style.display = (self.info[mode]?'none':'');
     self.edition = !self.info[mode];
     if (mode == 1)
@@ -396,6 +364,9 @@ WA.Elements.lovfieldElement = function(fatherNode, domID, code, listener)
       self.firstview = true;
     else if (self.value != undefined && self.value != null && self.domNodeField.value == self.value)
       self.firstview = true;
+    // change event
+    var ldomID = WA.parseID(domID, self.xdomID);
+    self.callEvent('change', {id:ldomID[2],value:self.domNodeField.value});
     setTimeout( function() { checkAll(true); }, 0); // check and notify group
   }
 
@@ -414,9 +385,9 @@ WA.Elements.lovfieldElement = function(fatherNode, domID, code, listener)
 
   function start()
   {
-    WA.Managers.event.on('keyup', self.domNodeField, onchange, true);
     WA.Managers.event.on('focus', self.domNodeField, onfocus, true);
     WA.Managers.event.on('blur', self.domNodeField, onblur, true);
+    WA.Managers.event.on('change', self.domNodeField, onchange, true);
 
     // If we are controled by another field
     if (self.code.attributes.synchronizer)
@@ -450,9 +421,9 @@ WA.Elements.lovfieldElement = function(fatherNode, domID, code, listener)
   {
     if (self.group)
       self.group.unregisterField(self);
-    WA.Managers.event.off('keyup', self.domNode, self.onchange, true);
-    WA.Managers.event.off('focus', self.domNode, self.onfocus, true);
-    WA.Managers.event.off('blur', self.domNode, self.onblur, true);
+    WA.Managers.event.off('focus', self.domNode, onfocus, true);
+    WA.Managers.event.off('blur', self.domNode, onblur, true);
+    WA.Managers.event.off('change', self.domNodeField, onchange, true);
   }
 
   this.destroy = destroy;
@@ -466,7 +437,6 @@ WA.Elements.lovfieldElement = function(fatherNode, domID, code, listener)
     self.domNodeError = null;
     self.domNodeHelp = null;
     self.domNodeValue = null;
-    self.domNodeCount = null;
     self.domNodeField = null;
     self.domNodeLabel = null;
     self.errormessages = null;

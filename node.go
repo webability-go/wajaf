@@ -246,6 +246,10 @@ func (n *Node) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 			if s != "" {
 				n.Data += string(tt)
 			}
+		case xml.Comment:
+			// ignore, it's a comment
+		default:
+			return errors.New("There was a critical error decoding the XML file. Please verify the intput text is really a compliant XML UTF8 file. (you may have some ANSI characters into your code).")
 		}
 	}
 	return nil

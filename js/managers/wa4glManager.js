@@ -635,7 +635,7 @@ WA.Managers.wa4gl = new function()
     var newapp = startApplication(node, applicationID, instanceID, params, '');
     return newapp;
   }
-  
+
   // ===========================================================
   // GENERAL PURPOSE FUNCTIONS
   this.getApplication = getApplication;
@@ -697,7 +697,7 @@ WA.Managers.wa4gl._4glnode = function(father, domID, supertype, code, type, clas
 
   this.visible = (this.code.attributes.display)?this.code.attributes.display!='none':true;
   this.serverlistener = (this.code.attributes.haslistener==='yes');
-  
+
   // set to the inner application if apply (only in zones)
   this.application = null;
 
@@ -816,7 +816,7 @@ WA.Managers.wa4gl._4glnode.prototype.propagate = function(type, params)
   // no notifications if we try to stop and we are not started
   if (type == 'stop' && this.state != 5)
     return false;
-  
+
   var result = true;
   if (type == 'start')
     this.state = 4;
@@ -937,11 +937,11 @@ WA.Managers.wa4gl._4glapplication = function(fatherNode, applicationID, instance
   // ----------------------------------------------
   // FRAMEWORK LOADER, private
   // ----------------------------------------------
-  function getJSON(request)
+  function getJSON(data)
   {
     var jsa = WA.JSON.withalert;
     WA.JSON.withalert = true;
-    self.code = WA.JSON.decode(request.responseText);
+    self.code = WA.JSON.decode(data);
     WA.JSON.withalert = jsa;
 
     if (self.code.error !== undefined && self.code.error === true)
@@ -955,8 +955,12 @@ WA.Managers.wa4gl._4glapplication = function(fatherNode, applicationID, instance
       }
       else
       {
-        alert(self.code.message);
-        throw self.code.message;
+        // Write into the node the error
+        msg = "";
+        if (self.code && self.code.message && WA.isString(self.code.message))
+          msg = self.code.message.replaceAll("\\n", "<br />").replaceAll("\n", "<br />");
+        self.domNode.innerHTML = '<div style="margin: 10px; padding: 10px; border: 3px solid red; background-color: #ffcccc;">' + msg + "</div>";
+        return;
       }
     }
     // 2. Then we start to interprete the code and build the app !
@@ -1185,8 +1189,36 @@ WA.Managers.wa4gl._4glapplication = function(fatherNode, applicationID, instance
       {
         // 1. Request for the application
         self.params = params;
-        
-        var request = WA.Managers.ajax.createRequest(WA.Managers.wa4gl.url + WA.Managers.wa4gl.prelib + self.applicationID + WA.Managers.wa4gl.premethod + WA.Managers.wa4gl.codemethod + WA.Managers.wa4gl.preformat + WA.Managers.wa4gl.format, 'POST', params, getJSON, true);
+        WA.Managers.ajax.createPromiseRequest({ url: WA.Managers.wa4gl.url + WA.Managers.wa4gl.prelib + self.applicationID + WA.Managers.wa4gl.premethod + WA.Managers.wa4gl.codemethod + WA.Managers.wa4gl.preformat + WA.Managers.wa4gl.format, data: params, method: 'POST', send: false })
+          .then(function (request) {
+            return request.send();
+          })
+          .then(function (response) {
+            getJSON(response);
+          })
+          .catch(function (data) {
+            if (!self.domNode)
+              console.log("CATCH ERROR=", code, err);
+            else
+            {
+              if (data.code == 401) // login required
+              {
+                self.code = null;
+                self.state = 0;
+                WA.Managers.wa4gl.callGlobalLogin(self, self.params);
+              }
+              else
+              {
+                msg = "";
+                if (data.code && data.message && WA.isString(data.message))
+                  msg = data.code + " - " + data.status + "<br />" + data.message.replaceAll("\\n", "<br />").replaceAll("\n", "<br />");
+                else
+                  msg = data;
+                self.domNode.innerHTML = '<div style="margin: 10px; padding: 10px; border: 3px solid red; background-color: #ffcccc;">' + msg + "</div>";
+              }
+            }
+          });
+//        var request = WA.Managers.ajax.createRequest(WA.Managers.wa4gl.url + WA.Managers.wa4gl.prelib + self.applicationID + WA.Managers.wa4gl.premethod + WA.Managers.wa4gl.codemethod + WA.Managers.wa4gl.preformat + WA.Managers.wa4gl.format, 'POST', params, getJSON, true);
         return;
       }
     }

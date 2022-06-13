@@ -55,8 +55,11 @@ WA.Elements.textfieldElement = function(fatherNode, domID, code, listener)
   }
 
   // validity checks
-  this.password = (this.code.attributes.password&&this.code.attributes.password=='yes'?true:false);
+  // type can be: text, password, integer, float, email
+  this.texttype = (this.code.attributes.texttype?this.code.attributes.texttype:'text');
   this.format = (this.code.attributes.format?new RegExp(this.code.attributes.format):null);
+  this.min = (this.code.attributes.min?this.code.attributes.min:'');
+  this.max = (this.code.attributes.max?this.code.attributes.max:'');
   this.minlength = (this.code.attributes.minlength?this.code.attributes.minlength:'');
   this.maxlength = (this.code.attributes.maxlength?this.code.attributes.maxlength:'');
   this.size = (this.code.attributes.size?this.code.attributes.size:'');
@@ -67,7 +70,7 @@ WA.Elements.textfieldElement = function(fatherNode, domID, code, listener)
   // value is the value set in this mode by setValues, if we want to undo changes
   this.defaultvalue = this.value = '';
   this.automessage = '';
-  
+
   // errors on checks
   this.errorexternal = false;  // true when set manually an error
   this.errors = {};
@@ -88,6 +91,8 @@ WA.Elements.textfieldElement = function(fatherNode, domID, code, listener)
         case 'statustoolong': this.errormessages.statustoolong = code.children[i].data; this.errors.statustoolong = false; break;
         case 'statustoofewwords': this.errormessages.statustoofewwords = code.children[i].data; this.errors.statustoofewwords = false; break;
         case 'statustoomanywords': this.errormessages.statustoomanywords = code.children[i].data; this.errors.statustoomanywords = false; break;
+        case 'statustoolow': this.errormessages.statustoolow = code.children[i].data; this.errors.statustoolow = false; break;
+        case 'statustoohigh': this.errormessages.statustoohigh = code.children[i].data; this.errors.statustoohigh = false; break;
         case 'statuscheck': this.errormessages.statuscheck = code.children[i].data; this.errors.statuscheck = false; break;
         case 'automessage': this.automessage = code.children[i].data; break;
       }
@@ -103,7 +108,7 @@ WA.Elements.textfieldElement = function(fatherNode, domID, code, listener)
   this.domNode.appendChild(this.domNodeValue);
 
   this.domNodeField = WA.createDomNode('input', domID+'_field', 'field');
-  this.domNodeField.type = this.password?'password':'text';
+  this.domNodeField.type = this.texttype=='masked'?'password':'text';
   this.domNodeField.name = this.id;
   if (this.maxlength)
     this.domNodeField.maxLength = this.maxlength;
@@ -233,6 +238,11 @@ WA.Elements.textfieldElement = function(fatherNode, domID, code, listener)
       self.domNodeCount.innerHTML = '';
       return;
     }
+    if (self.mode == 1 && self.auto)
+    {
+      self.status = 0;
+      return;
+    }
 
     self.status = 1;
     if (self.notnull[self.mode] && value == '')
@@ -246,35 +256,70 @@ WA.Elements.textfieldElement = function(fatherNode, domID, code, listener)
       self.status = 2;
       self.errors.statusbadformat = true;
     }
-    if (self.minlength && value.length < self.minlength)
+    if (self.texttype == "integer")
     {
-      self.status = 2;
-      self.errors.statustooshort = true;
-    }
-    if (self.maxlength && value.length > self.maxlength)
-    {
-      self.status = 2;
-      self.errors.statustoolong = true;
-    }
-    if (self.maxwords || self.minwords)
-    {
-      var text = value;
-      text = text.replace(/^[ ]+/, "");
-      text = text.replace(/[ ]+$/, "");
-      text = text.replace(/[ ]+/g, " ");
-      text = text.replace(/[\n]+/g, " ");
-      var numpalabras = (text.length>0?text.split(" ").length:0);
-      if (numpalabras < self.minwords)
+      nv = parseInt(value, 10)
+      min = parseInt(self.min, 10)
+      max = parseInt(self.max, 10)
+      if (min != max && nv < min)
       {
         self.status = 2;
-        self.errors.statustoofewwords = true;
+        self.errors.statustoolow = true;
       }
-      if (numpalabras > self.maxwords)
+      if (min != max && nv > max)
       {
         self.status = 2;
-        self.errors.statustoomanywords = true;
+        self.errors.statustoohigh = true;
       }
-      self.domNodeCount.innerHTML = numpalabras + '/' + value.length;
+    }
+    if (self.texttype == "float")
+    {
+      nv = parseFloat(value)
+      min = parseFloat(self.min)
+      max = parseFloat(self.max)
+      if (min != max && nv < min)
+      {
+        self.status = 2;
+        self.errors.statustoolow = true;
+      }
+      if (min != max && nv > max)
+      {
+        self.status = 2;
+        self.errors.statustoohigh = true;
+      }
+    }
+    if (self.texttype == "text" || self.texttype == "masked")
+    {
+      if (self.minlength && value.length < self.minlength)
+      {
+        self.status = 2;
+        self.errors.statustooshort = true;
+      }
+      if (self.maxlength && value.length > self.maxlength)
+      {
+        self.status = 2;
+        self.errors.statustoolong = true;
+      }
+      if (self.maxwords || self.minwords)
+      {
+        var text = value;
+        text = text.replace(/[\n\t\r]+/g, " ");
+        text = text.replace(/^[ ]+/, "");
+        text = text.replace(/[ ]+$/, "");
+        text = text.replace(/[ ]+/g, " ");
+        var numpalabras = (text.length>0?text.split(" ").length:0);
+        if (numpalabras < self.minwords)
+        {
+          self.status = 2;
+          self.errors.statustoofewwords = true;
+        }
+        if (numpalabras > self.maxwords)
+        {
+          self.status = 2;
+          self.errors.statustoomanywords = true;
+        }
+        self.domNodeCount.innerHTML = numpalabras + '/' + value.length;
+      }
     }
     if (self.errorexternal)
       self.status = 2;

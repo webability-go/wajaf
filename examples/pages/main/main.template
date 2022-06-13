@@ -168,7 +168,8 @@ function(e)
             <dataset>
 {"row":[
   {"id":"combined", "template":"folder", "image":"examplegroup.png", "name":"Combined", "father": null, "closeable": true, "loadable": false},
-    {"id":"ex-groupcontainer", "template":"example", "image":"example.png", "name":"groupContainer", "father": "combined", "closeable": false, "loadable": false}
+    {"id":"ex-groupcontainer", "template":"example", "image":"example.png", "name":"groupContainer", "father": "combined", "closeable": false, "loadable": false},
+    {"id":"ex-simpledommask", "template":"example", "image":"example.png", "name":"xdommask Simple", "father": "combined", "closeable": false, "loadable": false}
 %--
     {id:'ex_gridContainerSimple', template:'example', image:'example.png', name:'gridContainerSimple', father: 'combined', closeable: false, loadable: false},
     {id:'ex_gridContainer', template:'example', image:'example.png', name:'gridContainer', father: 'combined', closeable: false, loadable: false},

@@ -68,6 +68,27 @@ WA.Managers.ajax = new function()
     return r;
   }
 
+  // data is { url:, method:, data:, }
+  this.createPromiseRequest = createPromiseRequest;
+  function createPromiseRequest(data)
+  {
+    var prom = new Promise(function(resolve, reject)
+    {
+      try
+      {
+        callNotify('create');
+        var r = new WA.Managers.ajax.PromiseRequest(data, self.listener, self.timeoutabort);
+        resolve(r);
+      }
+      catch (e)
+      {
+        callNotify('error-create');
+        reject(-1, e);
+      }
+    });
+    return prom;
+  }
+
   this.createPeriodicRequest = createPeriodicRequest;
   function createPeriodicRequest(period, times, url, method, data, feedback, dosend)
   {
@@ -125,6 +146,7 @@ WA.Managers.ajax.Request = function(url, method, data, feedback, autosend, liste
   // working attributes
   this.request = null;
   this.parameters = null;
+  this.putdata = null;
   this.timer = null;
   this.timerabort = null;
   this.state = 0;               // 0 = nothing, 1 = sent and waiting, 2 = finished, 3 = error
@@ -182,6 +204,13 @@ WA.Managers.ajax.Request = function(url, method, data, feedback, autosend, liste
     self.parameters[id] = value;
   }
 
+  // Parameters for POST/GET send
+  this.addPutData = addPutData;
+  function addPutData(data)
+  {
+    self.putdata = data;
+  }
+
   this.getParameters = getParameters;
   function getParameters()
   {
@@ -218,12 +247,6 @@ WA.Managers.ajax.Request = function(url, method, data, feedback, autosend, liste
     {
       self.request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     }
-/*
-      Files: multipart/form-data:
-      
-      if (self.request.overrideMimeType)
-        self.request.setRequestHeader('Connection', 'close');
-*/
 //    self.request.setRequestHeader('Method', self.method + ' ' + self.url + ' HTTP/1.1');
   }
 
@@ -248,6 +271,7 @@ WA.Managers.ajax.Request = function(url, method, data, feedback, autosend, liste
           url += (url.match(/\?/) ? '&' : '?') + parameters;
       }
       self.request.open(self.method, url, true);
+      self.request.withCredentials = true;
       if (!form)
         headers();
       callNotify('start');
@@ -264,15 +288,20 @@ WA.Managers.ajax.Request = function(url, method, data, feedback, autosend, liste
         }
       }
       else if (self.method == 'PUT')
-        self.request.send(WA.JSON.encode(self.parameters));
+      {
+        if (self.putdata)
+          self.request.send(self.putdata);
+        else
+          self.request.send(JSON.stringify(self.parameters));
+      }
       else
         self.request.send(null);
       self.state = 1;
-      WA.debug.log(WA.i18n.getMessage('ajax.send')+url, 2);
+//      WA.debug.explain(WA.i18n.getMessage('ajax.send')+url, 2);
     }
     catch (e)
     {
-      WA.debug.log(WA.i18n.getMessage('ajax.errorcreation')+url, 1);
+//      WA.debug.explain(WA.i18n.getMessage('ajax.errorcreation')+url, 2);
       self.state = 3;
       processError(1, e);
     }
@@ -286,7 +315,7 @@ WA.Managers.ajax.Request = function(url, method, data, feedback, autosend, liste
       {
         if (self.request.status == 200)
         {
-          WA.debug.log(WA.i18n.getMessage('ajax.received')+self.url, 2);
+//          WA.debug.explain(WA.i18n.getMessage('ajax.received')+self.url, 2);
           if (self.timerabort)
           {
             clearTimeout(self.timerabort);
@@ -301,7 +330,7 @@ WA.Managers.ajax.Request = function(url, method, data, feedback, autosend, liste
         }
         else
         {
-          WA.debug.log(WA.i18n.getMessage('ajax.errorreception')+self.url, 1);
+//          WA.debug.explain(WA.i18n.getMessage('ajax.errorreception')+self.url, 2);
           self.state = 3;
           // we call error feedback, or alert
           processError(3, WA.i18n.getMessage('ajax.error')+self.request.status+':\n' + self.request.statusText, self.request);
@@ -318,7 +347,7 @@ WA.Managers.ajax.Request = function(url, method, data, feedback, autosend, liste
     }
     catch(e)
     {
-      WA.debug.log(WA.i18n.getMessage('ajax.fatalerror')+self.url+' '+e, 1);
+//      WA.debug.explain(WA.i18n.getMessage('ajax.fatalerror')+self.url+' '+e, 2);
       self.state = 3;
       processError(2, e);
     }
@@ -349,18 +378,17 @@ WA.Managers.ajax.Request = function(url, method, data, feedback, autosend, liste
   // type = 1: error sending, 2: error during process, 3: error state != 200, 4: timeout forced
   function processError(type, error, request)
   {
-    WA.debug.log(error, 1);
+    console.log('ERROR:');
+    console.log(type);
+    console.log(error);
+    console.log(request);
 
-    if (self.statefeedback)
-      self.statefeedback('error', type, error, request);
-
-    throw error;
-/*
     callNotify('error', type);
     if (typeof error == 'object')
       error = error.message;
     // abort and call feedback error
-*/
+    if (self.statefeedback)
+      self.statefeedback('error', type, error, request);
     // Default behaviour is to be silent on error
 //    else
 //      alert('Error: '+type+', '+error);
@@ -439,3 +467,330 @@ WA.i18n.setEntry('ajax.received', 'AJAX answer received from: ');
 WA.i18n.setEntry('ajax.errorreception', 'Error during AJAX reception from: ');
 WA.i18n.setEntry('ajax.fatalerror', 'Fatal error during AJAX reception from: ');
 WA.i18n.setEntry('ajax.error', 'Error: ');
+
+
+
+WA.Managers.ajax.PromiseRequest = function(data, listener, timeoutabort)
+{
+  var self = this;
+  // parameters
+  this.url = data.url;
+  this.method = data.method.toUpperCase();
+  this.data = data.data;
+  this.feedback = data.feedback;
+  this.autosend = data.send;
+  // special parameters
+  this.period = 0;
+  this.times = 0;
+  this.statefeedback = listener;    // consider waiting, error and abort feedbacks
+  this.timeoutabort = timeoutabort;      // time out to abort, no default, let it to the ajax autocontrol.
+  // working attributes
+  this.request = null;
+  this.parameters = null;
+  this.timer = null;
+  this.timerabort = null;
+  this.state = 0;               // 0 = nothing, 1 = sent and waiting, 2 = finished, 3 = error
+  this.listener = listener;
+  this.putdata = null;
+  // events
+  //this.onprogress = null;
+  this.onuploadprogress = null;
+  this.onloadstart = null;
+  this.onloadend = null;
+
+  try { this.request = new XMLHttpRequest(); }
+  catch(e)
+  { try { this.request = new ActiveXObject('Msxml2.XMLHTTP.3.0'); }
+    catch(e)
+    { try { this.request = new ActiveXObject('Msxml2.XMLHTTP'); }
+      catch(e)
+      { try { this.request = new ActiveXObject('Microsoft.XMLHTTP'); }
+        catch(e)
+        { alert(WA.i18n.getMessage('ajax.notsupported')); }
+      }
+    }
+  }
+
+  function callNotify(event, data)
+  {
+    if (self.listener)
+    {
+      self.listener(event, data);
+    }
+  }
+
+  // Special parameters
+  this.setPeriodic = setPeriodic;
+  function setPeriodic(period, times)
+  {
+    self.period = period;
+    self.times = times;
+  }
+
+  this.addStateFeedback = addStateFeedback;
+  function addStateFeedback(statefeedback, timeoutabort)
+  {
+    self.statefeedback = statefeedback;
+    if (timeoutabort != undefined && timeoutabort != null)
+      self.timeoutabort = timeoutabort;
+  }
+
+  this.setTimeoutAbort = setTimeoutAbort;
+  function setTimeoutAbort(timeoutabort)
+  {
+    self.timeoutabort = timeoutabort;
+  }
+
+  // Parameters for POST/GET send
+  this.addPutData = addPutData;
+  function addPutData(data)
+  {
+    self.putdata = data;
+  }
+
+  this.addParameter = addParameter;
+  function addParameter(id, value)
+  {
+    if (self.parameters === null)
+      self.parameters = {};
+    self.parameters[id] = value;
+  }
+
+  this.getParameters = getParameters;
+  function getParameters()
+  {
+    return self.parameters;
+  }
+
+  this.clearParameters = clearParameters;
+  function clearParameters()
+  {
+    self.parameters = null;
+  }
+
+  function buildParametersPost()
+  {
+    var data = self.data || '';
+    for (i in self.parameters)
+      data += (data.length > 0?'&':'') + encodeURIComponent(i) + '=' + encodeURIComponent(self.parameters[i]);
+    return data;
+  }
+
+  function buildParameters()
+  {
+    var data = self.data || '';
+    for (i in self.parameters)
+      data += (data.length > 0?'&':'') + escape(i) + '=' + escape(self.parameters[i]);
+    return data;
+  }
+
+  // Ajax control
+  function headers()
+  {
+    self.request.setRequestHeader('X-Requested-With', 'WAJAF::Ajax - WebAbility(r) v5');
+    if (self.method == 'POST' || self.method == 'PUT')
+    {
+      self.request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    }
+/*
+      if (self.request.overrideMimeType)
+        self.request.setRequestHeader('Connection', 'close');
+*/
+//    self.request.setRequestHeader('Method', self.method + ' ' + self.url + ' HTTP/1.1');
+  }
+
+  this.send = send;
+  function send(form)
+  {
+    prom = new Promise(function(resolve, reject) {
+      if (self.timer)
+        self.timer = null;
+      if (self.request.readyState != 0 && self.request.readyState != 4) // still doing something
+      {
+        reject(1, "NO READY STATE, STILL DOING SOMETHING");
+        return;
+      }
+
+      self.request.onreadystatechange = process;
+      if (self.timeoutabort)
+        self.timerabort = setTimeout( function() { timeabort(); }, self.timeoutabort );
+      try
+      {
+        var url = self.url;
+        if (self.method == 'GET')
+        {
+          var parameters = buildParameters();
+          if (parameters.length > 0)
+            url += (url.match(/\?/) ? '&' : '?') + parameters;
+        }
+        self.request.open(self.method, url, true);
+        self.request.withCredentials = true;
+        // events
+        self.request.onloadstart = ((self.onloadstart && (typeof(self.onloadstart) === 'function')) ? self.onloadstart: null);
+        var onuploadprogress = ((self.onuploadprogress && (typeof(self.onuploadprogress) === 'function')) ? self.onuploadprogress: null);
+        self.request.upload.addEventListener('progress', onuploadprogress); //progress de post
+        // self.request.onprogress //GET progress
+        self.request.onloadend = ((self.onloadend && (typeof(self.onloadend) === 'function')) ? self.onloadend: null);
+        // events -- /
+        if (!form)
+          headers();
+        callNotify('start');
+        if (self.method == 'POST')
+        {
+          if (!!form)
+            self.request.send(form);
+          else
+          {
+            var parameters = buildParametersPost();
+            self.request.send(parameters);
+          }
+        }
+        else if (self.method == 'PUT')
+        {
+          if (self.putdata)
+            self.request.send(self.putdata);
+          else
+            self.request.send(JSON.stringify(self.parameters));
+        }
+        else
+          self.request.send(null);
+        self.state = 1;
+      }
+      catch (e)
+      {
+        self.state = 3;
+        console.log("error", e)
+        reject(-1, e);
+      }
+
+      function process()
+      {
+        try
+        {
+          if (self.request.readyState == 4)
+          {
+            if (self.request.status == 200)
+            {
+              if (self.timerabort)
+              {
+                clearTimeout(self.timerabort);
+                self.timerabort = null;
+              }
+              callNotify('stop');
+              resolve(self.request.responseText);
+              self.state = 2;
+            }
+            else
+            {
+              self.state = 3;
+              reject({code:self.request.status,message:self.request.responseText,status:self.request.statusText});
+            }
+            self.request.onreadystatechange = WA.nothing;  // IE6 CANNOT assign null !!!
+            var state = checkPeriod();
+            if (!state)
+              setTimeout( function() { WA.Managers.ajax.destroyRequest(self); }, 1);
+          }
+          else
+          {
+            waiting();
+          }
+        }
+        catch(e)
+        {
+          self.state = 3;
+          reject(-2, e);
+        }
+      }
+    });
+    return prom;
+  }
+
+  function checkPeriod()
+  {
+    if (self.period)
+    {
+      if (--self.times > 0)
+      {
+        self.timer = setTimeout( function() { self.send(); }, self.period);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function waiting()
+  {
+    // dispatcher for user events like "loading...", "making request", "sending information" based on readyState , etc ?
+    // could also use a setInterval to periodically call this function to know how is going the call
+    if (self.statefeedback)
+      self.statefeedback('wait', self.request.readyState, '');
+  }
+
+  // we abort after a given timeout
+  function doabort()
+  {
+    if (self.timer)
+    {
+      clearTimeout(self.timer);
+      self.timer = null;
+    }
+    self.request.abort();
+    self.request.onreadystatechange = WA.nothing;
+    if (!checkPeriod())
+      setTimeout( function() { WA.Managers.ajax.destroyRequest(self); }, 1);
+  }
+
+  // timeout abort
+  function timeabort()
+  {
+    self.timerabort = null;
+    callNotify('abortbytimeout');
+    doabort();
+  }
+
+  // Manual abort
+  this.abort = abort;
+  function abort()
+  {
+    if (self.timerabort)
+    {
+      clearTimeout(self.timerabort);
+      self.timerabort = null;
+    }
+    callNotify('abortbyuser');
+    doabort();
+  }
+
+  this.destroy = destroy;
+  function destroy()
+  {
+    self.period = 0;
+    self.times = 0;
+    if (self.timerabort)
+    {
+      clearTimeout(self.timerabort);
+      self.timerabort = null;
+    }
+    if (self.timer)
+    {
+      clearTimeout(self.timer);
+      self.timer = null;
+    }
+    if (self.state == 1 || self.state == 3)
+    {
+      doabort();
+    }
+    self.request.onreadystatechange = WA.nothing;
+    self.clearParameters();
+    delete self.request;
+    self.statefeedback = null;
+    self.feedback = null;
+    self = null;
+  }
+
+  /*if (data.send)
+    return this.send();*/
+  if (self.autosend)
+    this.send();
+  return this;
+}

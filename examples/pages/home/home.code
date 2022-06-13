@@ -19,9 +19,9 @@
 
 <div class="container">
 
-<h1 style="font-size: 20px;">The <a href="http://www.webability.info/wajaf">WebAbility&reg; Javascript Application Framework</a> (WAJAF) demo site</h1>
+<h1 style="font-size: 20px;">The <a href="https://github.com/webability-go/wajaf" target="_blank">WebAbility&reg; Javascript Application Framework</a> (WAJAF) demo site</h1>
 
-Any doubt ? please refer to the <a href="http://developers.webability.info/wajaf" target="_blank">WAJAF Documentation</a><br />
+Any doubt ? please refer to the <a href="https://github.com/webability-go/wajaf" target="_blank">WAJAF Documentation</a><br />
 
 <br />
 
@@ -56,7 +56,7 @@ Any doubt ? please refer to the <a href="http://developers.webability.info/wajaf
 
 <h2>WAJAF</h2>
 
-<h3>The Core</h3>
+<h3>The Core itself</h3>
 <ul>
  <a href="examples/core.attributes.html">Attributes examples</a><br />
  <a href="examples/core.zindex.html">getNextZIndex examples</a><br />

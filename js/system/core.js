@@ -20,26 +20,42 @@
     along with WAJAF.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// --------------------------------------------------------------------------------------------------------
 // WA is the main WAJAF Object that will contain anything else (except for the native JS object prototypes)
-var WA = { version: '1.2.0',
+// --------------------------------------------------------------------------------------------------------
+var WA = { version: '0.1.1',
            running: false };
 
 // Main WAJAF Object definition
 
+// --------------------------------------------------------------------------------------------------------
+// ZIndex main index sequence
+// --------------------------------------------------------------------------------------------------------
 WA.zIndex = 1;
 WA.getNextZIndex = function()
 {
   return WA.zIndex++;
 }
 
+// --------------------------------------------------------------------------------------------------------
+// == is* functions
+// --------------------------------------------------------------------------------------------------------
 WA.isDefined = function(val)
 {
   return val !== undefined;
 }
 
+WA.sizeof = function(obj, strict)
+{
+  var c = 0;
+  for (var i in obj)
+    if (!WA.isFunction(obj[i]) && ((obj.hasOwnProperty(i) && strict) || !strict) ) c++;  // we count anything except functions
+  return c;
+}
+
 WA.isEmpty = function(val, blank)
 {
-  return val === undefined || val === null || ((WA.isArray(val) && !val.length)) || (!blank ? val === '' : false);
+  return val === undefined || val === null || (WA.isArray(val) && !val.length) || (WA.isObject(val) && WA.sizeof(val) == 0) || (!blank ? val === '' : false);
 }
 
 WA.isBool = function(val)
@@ -83,6 +99,9 @@ WA.isDOM = function(o)
   return (o === window || (typeof Node === 'object' ? o instanceof Node : o !== null && typeof o === 'object' && typeof o.nodeType === 'number' && typeof o.nodeName === 'string' ));
 }
 
+// --------------------------------------------------------------------------------------------------------
+// Objects & Nodes functions
+// --------------------------------------------------------------------------------------------------------
 WA.extend = function(collector, source)
 {
   var f = function() {};
@@ -129,14 +148,6 @@ WA.clone = function(obj, fast)
   else
     cloned = obj;
   return cloned;
-}
-
-WA.sizeof = function(obj, strict)
-{
-  var c = 0;
-  for (var i in obj)
-    if (!WA.isFunction(obj[i]) && ((obj.hasOwnProperty(i) && strict) || !strict) ) c++;  // we count anything except functions
-  return c;
 }
 
 // Will create a dom Node of specified type, and apply classname if defined
@@ -263,7 +274,7 @@ WA.get = function(n)
   this.close = function(s, f, w, h) { if (!WA.Managers.anim) return null; for (var i = 0, l = _nodes.length; i < l; i++) WA.Managers.anim.close(_nodes[i], s, w, h, f); return self; }
   this.move = function(s, x, y, f, l, t) { if (!WA.Managers.anim) return null; for (var i = 0, lx = _nodes.length; i < lx; i++) WA.Managers.anim.move(_nodes[i], s, l, t, x, y, f); return self; }
 
-  // generic mouse event binder
+  // generic event binder
   this.on = function(e, f) { for (var i = 0, l = _nodes.length; i < l; i++) WA.Managers.event.on(e, _nodes[i], f, true); return self; }
   this.off = function(e, f) { for (var i = 0, l = _nodes.length; i < l; i++) WA.Managers.event.off(e, _nodes[i], f, true); return self; }
 
@@ -355,7 +366,7 @@ WA.JSON.decode = function(json, execerror)
   }
   if (execerror && code.error && !code.login)
   {
-    WA.debug.log(code.messages, 1);
+    WA.debug.log(code.message, 1);
     code = null;
   }
   return code;
