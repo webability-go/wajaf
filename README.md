@@ -1,4 +1,3 @@
-@UTF-8
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/webability-go/wajaf)](https://goreportcard.com/report/github.com/webability-go/wajaf)
 [![GoDoc](https://godoc.org/github.com/webability-go/wajaf?status.png)](https://godoc.org/github.com/webability-go/wajaf)
@@ -16,7 +15,7 @@ JAVASCRIPT manual:
 
 The examples and tests show the working functions and the manual of them.
 
-[![GoDoc](https://devwajaf.webability.info)
+[![Go to Examples]](https://devwajaf.webability.info)
 
 1. The main core.
 
@@ -24,12 +23,12 @@ The main core contains:
 
 - 2 attributes:
 
-Examples & manuals: [![GoDoc](https://devwajaf.webability.info/examples/core.attributes.html)
+Examples & manuals: [![Go to attributes examples]](https://devwajaf.webability.info/examples/core.attributes.html)
 
 
 - zIndex method, used to set an unused zIndex to a node,
 
-Examples & manuals: [![GoDoc](https://devwajaf.webability.info/examples/core.zindex.html)
+Examples & manuals: [![Go to core examples]](https://devwajaf.webability.info/examples/core.zindex.html)
 
 
 - Verification methods is*, used to know the type of JS objects. All the functions return true/false. True means the variable match the specified type by the is* method.
@@ -44,7 +43,7 @@ Examples & manuals: [![GoDoc](https://devwajaf.webability.info/examples/core.zin
 -- isDate: return true if the variable is a Date object.
 -- isDOM: return true if the variable is a DOM node object.
 
-Examples & manuals: [![GoDoc](https://devwajaf.webability.info/examples/core.is.html)
+Examples & manuals: [![Go to examples]](https://devwajaf.webability.info/examples/core.is.html)
 
 
 - Objects and nodes methods.
@@ -61,7 +60,7 @@ For DOM nodes:
 - WA.getDomNode: Will get the DOM node of the specified Id.
 - WA.toDOM: Will get the DOM node from a string ID or a node itself.
 
-Examples & manuals: [![GoDoc](https://devwajaf.webability.info/examples/core.other.html)
+Examples & manuals: [![Go to examples]](https://devwajaf.webability.info/examples/core.other.html)
 
 
 - Node get() functions.
@@ -90,7 +89,7 @@ The parameter of get() method is a string used to search the nodes:
 "!name": If you want to find a list of nodes by their name (in a form).
 "tag": If you want to find a list of nodes by their tag type (example: 'div', 'a').
 
-Examples & manuals: [![GoDoc](https://devwajaf.webability.info/examples/core.get.html)
+Examples & manuals: [![Go to examples]](https://devwajaf.webability.info/examples/core.get.html)
 
 
 2. The browser core:
