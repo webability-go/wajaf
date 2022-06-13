@@ -7,13 +7,13 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/webability-go/wajaf/resources"
+	"github.com/webability-go/wajaf"
 	"github.com/webability-go/xcore/v2"
 
-	"github.com/webability-go/xamboo/assets"
+	"github.com/webability-go/xamboo/cms/context"
 )
 
-func Run(ctx *assets.Context, template *xcore.XTemplate, language *xcore.XLanguage, e interface{}) interface{} {
+func Run(ctx *context.Context, template *xcore.XTemplate, language *xcore.XLanguage, e interface{}) interface{} {
 
 	// Va a buscar los datos de la página
 	// JS: core mandatory load for every page
@@ -81,7 +81,7 @@ func (js *WJS) Load(filename string) ([]byte, error) {
 			data, _ := ioutil.ReadFile(js.Dir + d + filename)
 			return data, nil
 		}
-		data := resources.ResourcesContainer.Get(d + filename)
+		data := wajaf.GetJSFile(filename)
 		if data != nil {
 			return data, nil
 		}

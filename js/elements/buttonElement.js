@@ -79,6 +79,7 @@ WA.Elements.buttonElement = function(domNodeFather, domID, code, listener)
   else
     this.value = null;
 
+  this.haslistener = (code.attributes.haslistener==='yes');
   if (this.code.attributes.action)
     this.action = this.code.attributes.action;
   else
@@ -119,7 +120,18 @@ WA.Elements.buttonElement = function(domNodeFather, domID, code, listener)
     if (self.group && self.action)
     {
       self.group.doAction(self.action);
+      return
     }
+
+    if (!self.haslistener)
+      return;
+    // send information to server based on mode
+    WA.Managers.ajax.createRequest(WA.Managers.wa4gl.url + WA.Managers.wa4gl.prelib + self.app.applicationID + WA.Managers.wa4gl.premethod + self.id + WA.Managers.wa4gl.preformat + WA.Managers.wa4gl.format, 'POST', 'action=click', clickresponse, true);
+  }
+
+  function clickresponse(response)
+  {
+    self.callEvent('response', response);
   }
 
   // called by the group linked

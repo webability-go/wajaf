@@ -183,7 +183,7 @@ WA.Containers.groupContainer = function(fatherNode, domID, code, listener)
 
   // ========================================================================================
   // local private methods
-  
+
   function callListener(action)
   {
     if (self.actionlistener)
@@ -212,14 +212,20 @@ WA.Containers.groupContainer = function(fatherNode, domID, code, listener)
     try
     {
       var data = WA.JSON.decode(r.responseText);
-      if (data)
+      if (data && data.success)
       {
         self.dataloaded = true;
-        for (var i in data)
+        for (var i in data.data)
         {
-          self.data[i] = data[i];
+          self.data[i] = data.data[i];
           self.currentkey = i;
         }
+      } else {
+        // write ERROR
+        console.log(data)
+//        alert(data.messages.text);
+        stopLoading();
+        return;
       }
       fillData();
       callListener('fill');
@@ -291,8 +297,10 @@ WA.Containers.groupContainer = function(fatherNode, domID, code, listener)
       return;
     }
 
+//    console.log("SELF.DATA=", self.currentkey, self.data);
     for (var i=0, l=self.fields.length; i < l; i++)
     {
+//      console.log("FIELD ID=", self.fields[i].id)
       // search the record into the data
       var value = null;
       if (self.fields[i].record && self.data[self.currentkey][self.fields[i].id] != undefined )
@@ -616,9 +624,10 @@ WA.Containers.groupContainer = function(fatherNode, domID, code, listener)
       if (result && result.success)
       {
         var rest = self.callEvent('success', result);
+        callListener('success');
         self.status = 3;
-        if (result.messages && result.messages.text)
-          showMessage(result.messages.text, true);
+        if (result.message && result.message.text)
+          showMessage(result.message.text, true);
         else
           showMessage(self.result[self.mode], true);
         if (self.mode == 1 || self.mode == 2)
@@ -652,7 +661,7 @@ WA.Containers.groupContainer = function(fatherNode, domID, code, listener)
       }
       else
       {
-        setMessages(result);
+        self.setMessages(result);
         self.callEvent('failure', result);
         self.status = 4;
         checkClass();
@@ -784,6 +793,7 @@ WA.Containers.groupContainer = function(fatherNode, domID, code, listener)
   this.setMessages = setMessages;
   function setMessages(params)
   {
+    console.log("setMessages", params);
     // 3 ways to put messages:
     // 1. is POPUP
     // 2. is any error domID
@@ -901,4 +911,3 @@ WA.Containers.groupContainer.groupZone = function(father, domID, code, listener)
 
 // Add basic zone code
 WA.extend(WA.Containers.groupContainer.groupZone, WA.Managers.wa4gl._zone);
-

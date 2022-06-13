@@ -4,10 +4,10 @@
 [![GoDoc](https://godoc.org/github.com/webability-go/wajaf?status.png)](https://godoc.org/github.com/webability-go/wajaf)
 [![GolangCI](https://golangci.com/badges/github.com/webability-go/wajaf.svg)](https://golangci.com)
 
-WAJAF for GO v1
+WAJAF for GO v0.1
 =============================
 
-WAJAF is the WebAbility Javascript Application Framework. It is a synchronized GO-Server <=> JS-Client framework to developp organized web applications.
+WAJAF is the WebAbility Javascript Application Framework. It is a synchronized GO-Server <=> JS-Client framework to develop organized web applications.
 
 GO manuals are available on godoc.org [![GoDoc](https://godoc.org/github.com/webability-go/wajaf?status.png)](https://godoc.org/github.com/webability-go/wajaf)
 
@@ -109,6 +109,41 @@ TO DO:
 
 Version Changes Control
 =======================
+
+v0.1.3 - 2022-06-12
+------------------------
+- Added CodeNode.go to create a node of code.
+- Added colorfieldelement.go to create a field to pick a color.
+- Added config/wajaf.conf in examples to run the examples on a xamboo server if needed.
+- The css for prettify is now absolute in the html code.
+- Some correction in the example code.
+- The go libraries now includes the new structures compatible with Xamboo 1.6
+- The jsfile.go added to manage all the JS files on an embed filesystem.
+- The js.go library now uses the GetJSFile into the wajaf library.
+- go.mod modified to go 1.17 for embed filesystem needed.
+- Some errors corrected into groupContainer.js and tabContainer.js to work better.
+- The buttonElement now as a listener to send data to the server when clicked.
+- lovFieldElement is now working correctly.
+- textFieldElement now knows integer, float, text, masked types of fields, and correctly convert values to send to server.
+- ajaxManager can now handle ajax promises.
+- canvasManager create for test purpose.
+- wa4glmanager modified to work on promises, capture errors and needed login requests.
+- options.go added to manager lovfield list of options.
+- resources directory removed, replaced by embed filesystem
+
+
+v0.1.2 - 2021-10-04
+------------------------
+- Correction of isEmpty function of the core, to give true is the Date is empty or the String() is empty.
+- The simple javascript examples are now working on a Xamboo Go Server (Presentation, js.go corrected, all libraries working)
+
+
+v0.1.1 - 2021-02-26
+------------------------
+- gridContainer.js has been modified to support large list of daat and put correct information metada data.
+- node.go enhanced to detect wrong XML formats and return an error
+- Added xml.Comment into node XML unmarshall to consider it
+
 
 v0.1.0 - 2020-12-22
 ------------------------

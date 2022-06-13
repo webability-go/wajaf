@@ -51,11 +51,11 @@ var fct = [WA.isDefined, WA.isEmpty, WA.isBool, WA.isNumber, WA.isString,
     WA.isArray, WA.isObject, WA.isFunction, WA.isDate,WA.isDOM];
 
 var datanames = ['undefined', 'null','[]','{}','""','true','0','123','123.45','"string"',
-    '[1,2,3]','{id:1}','fct()','Date()','document.body', 'String()'
+    '[1,2,3]','{id:1}','fct()','Date()','document.body', 'String("abc")', 'String()'
 ];
 
 var data = [undefined, null, [], {}, '', true, 0, 123, 123.45, 'string',
-    [1,2,3], {id:1}, function() {}, new Date(), document.body, new String("abc")];
+    [1,2,3], {id:1}, function() {}, new Date(), document.body, new String("abc"), new String()];
 
 document.write('<table border="1" class="chart" style="text-align: center;"><tr><td></td>');
 for (var j=0, m = fct.length; j<m; j++)
