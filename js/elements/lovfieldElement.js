@@ -56,6 +56,7 @@ WA.Elements.lovfieldElement = function(fatherNode, domID, code, listener)
 
   // validity checks
   this.multiselect = (this.code.attributes.multiselect?this.code.attributes.multiselect=='yes':null);
+  this.radiobutton = (this.code.attributes.radiobutton ? this.code.attributes.radiobutton == 'yes' : null);
   this.threshold = (this.code.attributes.threshold?this.code.attributes.threshold:3);
   this.options = {};
 
@@ -103,10 +104,17 @@ WA.Elements.lovfieldElement = function(fatherNode, domID, code, listener)
   this.domNodeValue = WA.createDomNode('div', domID+'_value', 'value');
   this.domNode.appendChild(this.domNodeValue);
 
-  this.domNodeField = WA.createDomNode('select', domID+'_field', 'field');
+  if (!this.radiobutton)
+  {
+    this.domNodeField = WA.createDomNode('select', domID+'_field', 'field');
+    if (this.size)
+      this.domNodeField.style.width = this.size+'px';
+    if (this.multiselect)
+      this.domNodeField.multiple = true;
+  } else {
+    this.domNodeField = WA.createDomNode('div', domID + '_field', 'field');
+  }
   this.domNodeField.name = this.id;
-  if (this.size)
-    this.domNodeField.style.width = this.size+'px';
   this.domNode.appendChild(this.domNodeField);
 
   this.domNodeHelp = WA.createDomNode('p', domID+'_help', 'help');
@@ -176,18 +184,33 @@ WA.Elements.lovfieldElement = function(fatherNode, domID, code, listener)
 
   function populate()
   {
-    var text = '';
-    if (!self.notnull[self.mode])
+    if (self.radiobutton)
     {
-      text += '<option value=""'+(!self.value?' selected="selected"':'')+'></option>';
+      if (self.options)
+      {
+        var text = '';
+        for (var i in self.options)
+        {
+          text += '<input type="'+(self.multiselect?"checkbox":"radio")+'" id="'+self.domID+'_check" name="'+self.domID+'" value="'+i+'"'+(i==self.value?' checked="checked"':'')+' />'+self.options[i]+'<br />';
+        }
+        self.domNodeField.innerHTML = text;
+      }
     }
-    for (var i in self.options)
+    else
     {
-      // we intelligent populate based on option, select or search
-      // is this the selected option ?
-      text += '<option value="'+i+'"'+(i==self.value?' selected="selected"':'')+'>'+self.options[i]+'</option>';
+      var text = '';
+      if (!self.notnull[self.mode])
+      {
+        text += '<option value=""'+(!self.value?' selected="selected"':'')+'></option>';
+      }
+      for (var i in self.options)
+      {
+        // we intelligent populate based on option, select or search
+        // is this the selected option ?
+        text += '<option value="'+i+'"'+(i==self.value?' selected="selected"':'')+'>'+self.options[i]+'</option>';
+      }
+      self.domNodeField.innerHTML = text;
     }
-    self.domNodeField.innerHTML = text;
   }
 
   this.checkStatus = checkStatus;
@@ -401,6 +424,38 @@ WA.Elements.lovfieldElement = function(fatherNode, domID, code, listener)
   this.getValues = getValues;
   function getValues()
   {
+    // Case of a multiselect/Radio
+    if (self.radiobutton)
+    {
+      if (self.multiselect)
+      {
+        var values = [];
+        for (var i=0, l=self.domNodeField.childNodes.length; i < l; i++)
+        {
+          if (self.domNodeField.childNodes[i].checked)
+          {
+            values.push(self.domNodeField.childNodes[i].value);
+          }
+        }
+        return values;
+      } else {
+        for (var i = 0, l = self.domNodeField.childNodes.length; i < l; i++) {
+          if (self.domNodeField.childNodes[i].checked) {
+            return self.domNodeField.childNodes[i].value;
+          }
+        }
+        return null;
+      }
+    }
+    if (self.multiselect)
+    {
+      var values = [];
+      var selected = self.domNodeField.selectedOptions;
+      for (var i = 0; i < selected.length; i++) {
+        values.push(selected[i].value);
+      }
+      return values;
+    }
     return self.domNodeField.value;
   }
 
@@ -409,10 +464,19 @@ WA.Elements.lovfieldElement = function(fatherNode, domID, code, listener)
   {
     self.firstview = true;
     self.value = self.domNodeField.value = values;
-    if (values != undefined && values != null)
-      self.domNodeValue.innerHTML = values + (self.options[values]?(' - ' + self.options[values]):'');
-    else
-      reset();
+    // Case of a multiselect/Radio
+    if (self.radiobutton || self.multiselect)
+    {
+      for (var i=0, l=self.domNodeField.childNodes.length; i < l; i++)
+      {
+        self.domNodeField.childNodes[i].checked = (values.indexOf(self.domNodeField.childNodes[i].value) != -1);
+      }
+    } else {
+      if (values != undefined && values != null)
+        self.domNodeValue.innerHTML = values + (self.options[values] ? (' - ' + self.options[values]) : '');
+      else
+        reset();
+    }
     checkAll();
   }
 
@@ -455,26 +519,3 @@ WA.Elements.lovfieldElement = function(fatherNode, domID, code, listener)
 WA.extend(WA.Elements.lovfieldElement, WA.Managers.wa4gl._element);
 
 
-/*
-
-	  this.domNode = document.createElement('select');
-	  if(this.multiselect)
-	  {
-		  this.classname = params.attributes.classname?params.attributes.classname:'lovmok';
-		  this.classnameerror = params.attributes.classnameerror?params.attributes.classnameerror:'lovmerror';
-		  this.classnamefocus = params.attributes.classnamefocus?params.attributes.classnamefocus:'lovmfocus';
-		  this.classnamedisabled = params.attributes.classnamedisabled?params.attributes.classnamedisabled:'lovmdisabled';
-		  this.classnamereadonly = params.attributes.classnamereadonly?params.attributes.classnamereadonly:'lovmreadonly';
-		  this.classnameselected = params.attributes.classname?params.attributes.classname:'lovmselected';
-	    this.domNode.setAttribute('multiple','1');
-	  }
-	  this.domNode.id = domID;
-	  this.domNode.name = _4glNode.id;
-	  if (this.width)
-	    this.domNode.style.width = this.width+'px';
-	  if (this.height)
-	    this.domNode.style.height = this.height+'px';
-	  domNodefather.appendChild(this.domNode);
-  // we link with the group container if needed
-
-*/

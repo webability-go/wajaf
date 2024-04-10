@@ -79,10 +79,30 @@
 WA.Containers.groupContainer = function(fatherNode, domID, code, listener)
 {
   var self = this;
-  WA.Containers.groupContainer.sourceconstructor.call(this, fatherNode, domID, code, 'form', { classname:'group' }, listener);
+
+  this.maingroup = code.attributes.maingroup ? code.attributes.maingroup : undefined;
+  if (this.maingroup)
+    WA.Containers.groupContainer.sourceconstructor.call(this, fatherNode, domID, code, 'div', { classname: 'group' }, listener);
+  else
+    WA.Containers.groupContainer.sourceconstructor.call(this, fatherNode, domID, code, 'form', { classname:'group' }, listener);
   this.domNodeForm = this.domNode;
+
+  this.domNodeTitle = WA.createDomNode('div', domID + '_title', 'title');
+  this.domNodeForm.appendChild(this.domNodeTitle);
+
   this.domNode = WA.createDomNode('fieldset', null, null);
   this.domNodeForm.appendChild(this.domNode);
+  if (this.maingroup) {
+    this.domNodeRecords = WA.createDomNode('div', null, null);
+    this.domNode.appendChild(this.domNodeRecords);
+    // REGISTER THIS FORM INTO TE PIANEMFORM
+    var group = null;
+    if (this.father.father.code.attributes.type == "groupContainer") {
+      group = this.father.father;
+      group.registerForm(this.xdomID[2], this);
+    }
+  }
+
 
   this.zoneNotify = null;
 
@@ -108,11 +128,14 @@ WA.Containers.groupContainer = function(fatherNode, domID, code, listener)
     this.authmodes[i] = (this.code.attributes.authmodes?this.code.attributes.authmodes.indexOf(''+i)!=-1:true);
   }
 
+  this.subForms = {};
   this.actionlistener = null;
   this.fields = [];
   this.data = {};
   this.dataloaded = false;
   this.datatemporal = {};
+  this.tempkey = 1;
+  this.template = "";
 
   this.error = null;
   this.help = null;
@@ -125,47 +148,48 @@ WA.Containers.groupContainer = function(fatherNode, domID, code, listener)
   this.title = ['','Insert','Update','Delete','View'];
   this.result = ['','Insert ok','Update ok','Delete ok'];
 
-  for (var i = 0, l = code.children.length; i < l; i++)
+  if (code.children)
   {
-    if (code.children[i].tag == 'dataset' && code.children[i].data)
+    for (var i = 0, l = code.children.length; i < l; i++)
     {
-      try
+      if (code.children[i].tag == 'dataset' && code.children[i].data)
       {
-        self.data = WA.JSON.decode(code.children[i].data);
-        if (self.data[self.varkey] == self.currentkey)
-          self.dataloaded = true;
+        try
+        {
+          self.data = WA.JSON.decode(code.children[i].data);
+          if (self.data[self.varkey] == self.currentkey)
+            self.dataloaded = true;
+        }
+        catch (e)
+        {
+          WA.debug.log('Error on the dataset of groupContainer:', 1);
+          WA.debug.log(e, 1);
+          // what do we do if there is an error in the dataset ? error ? alert ? debug ?
+        }
+        continue;
       }
-      catch (e)
-      {
-        WA.debug.log('Error on the dataset of groupContainer:', 1);
-        WA.debug.log(e, 1);
-        // what do we do if there is an error in the dataset ? error ? alert ? debug ?
-      }
-      continue;
+      if (code.children[i].tag == 'alertmessage')
+        self.mainerroralert = code.children[i].data;
+      if (code.children[i].tag == 'servermessage')
+        self.servererroralert = code.children[i].data;
+      if (code.children[i].tag == 'titleinsert')
+        self.title[1] = code.children[i].data;
+      if (code.children[i].tag == 'titleupdate')
+        self.title[2] = code.children[i].data;
+      if (code.children[i].tag == 'titledelete')
+        self.title[3] = code.children[i].data;
+      if (code.children[i].tag == 'titleview')
+        self.title[4] = code.children[i].data;
+      if (code.children[i].tag == 'insertok')
+        self.result[1] = code.children[i].data;
+      if (code.children[i].tag == 'updateok')
+        self.result[2] = code.children[i].data;
+      if (code.children[i].tag == 'deleteok')
+        self.result[3] = code.children[i].data;
+      if (code.children[i].tag == 'template')
+        self.template = code.children[i].data;
     }
-    if (code.children[i].tag == 'alertmessage')
-      self.mainerroralert = code.children[i].data;
-    if (code.children[i].tag == 'servermessage')
-      self.servererroralert = code.children[i].data;
-    if (code.children[i].tag == 'titleinsert')
-      self.title[1] = code.children[i].data;
-    if (code.children[i].tag == 'titleupdate')
-      self.title[2] = code.children[i].data;
-    if (code.children[i].tag == 'titledelete')
-      self.title[3] = code.children[i].data;
-    if (code.children[i].tag == 'titleview')
-      self.title[4] = code.children[i].data;
-    if (code.children[i].tag == 'insertok')
-      self.result[1] = code.children[i].data;
-    if (code.children[i].tag == 'updateok')
-      self.result[2] = code.children[i].data;
-    if (code.children[i].tag == 'deleteok')
-      self.result[3] = code.children[i].data;
   }
-
-
-  this.domNodeTitle = WA.createDomNode('div', domID+'_title', 'title');
-  this.domNode.appendChild(this.domNodeTitle);
 
   this.domNodeMessage = WA.createDomNode('div', domID+'_message', 'message');
   this.domNode.appendChild(this.domNodeMessage);
@@ -464,6 +488,17 @@ WA.Containers.groupContainer = function(fatherNode, domID, code, listener)
     checkClass();
   }
 
+  this.registerForm = registerForm;
+  function registerForm(id, form) {
+    console.log("REGISTER SUBFORM", id)
+    self.subForms[id] = form;
+  }
+
+  this.unregisterForm = unregisterForm;
+  function unregisterForm(field) {
+    //    self.fields.push(field);
+  }
+  
   this.registerField = registerField;
   function registerField(field)
   {
@@ -542,6 +577,7 @@ WA.Containers.groupContainer = function(fatherNode, domID, code, listener)
   this.doInsert = doInsert;
   function doInsert()
   {
+    console.log("doInsert", self.lastkey, self.currentkey, self.domID);
     // we keep the current key for if we cancel the insert mode
     self.lastkey = self.currentkey;
     self.currentkey = null;
@@ -678,6 +714,12 @@ WA.Containers.groupContainer = function(fatherNode, domID, code, listener)
     stopLoading();
   }
 
+  function fillTemplate(templateString, templateVars) {
+    var tmp = eval("WA.templater`" + templateString + "`;");
+    console.log(templateString, templateVars);
+    return tmp(templateVars);
+  }
+
   // basic group options
   this.doSubmit = doSubmit;
   function doSubmit()
@@ -702,6 +744,38 @@ WA.Containers.groupContainer = function(fatherNode, domID, code, listener)
     if (!result)
     {
       alert(self.mainerroralert);
+      return;
+    }
+
+    // IF we are into sub-group, we only keep the info local until the main group makes the update 
+    if (self.maingroup) {
+      var datatemporal = {};
+      for (var i = 0, l = self.fields.length; i < l; i++) {
+        if (self.fields[i].formtype != 'field')
+          continue;
+        if (!self.fields[i].editable || !self.fields[i].edition)
+          continue;
+        var values = self.fields[i].getValues();
+        // if values is an array, please loop !
+        datatemporal[self.fields[i].id] = values;
+      }
+      datatemporal[self.varkey] = self.currentkey;
+      datatemporal[self.varmode] = self.mode;
+      if (!self.currentkey) // new record
+      {
+        self.datatemporal['new|' + self.tempkey] = datatemporal;
+        self.tempkey++;
+      } else {
+        self.datatemporal[self.currentkey] = datatemporal;
+      }
+      // PRINT the saved records
+      text = "";
+      for (var i in self.datatemporal) {
+        text += fillTemplate(self.template, self.datatemporal[i]);
+      }
+      self.domNodeRecords.innerHTML = text;
+
+      console.log("REC saved locally", self.datatemporal);
       return;
     }
 
@@ -732,6 +806,19 @@ WA.Containers.groupContainer = function(fatherNode, domID, code, listener)
           request.addParameter(self.fields[i].id, values);
         self.datatemporal[self.fields[i].id] = values;
       }
+      // SUB GROUPS
+      if (self.subForms) {
+        for (var i in self.subForms) {
+          for (var j in self.subForms[i].datatemporal)
+          {
+            for (var k in self.subForms[i].datatemporal[j])
+            {
+              request.addParameter(i + '|' + j + '|' + k, self.subForms[i].datatemporal[j][k]);
+            }
+          }
+        }
+      }
+
       if (self.mode != 1)
         request.addParameter(self.varkey, self.currentkey);
       request.addParameter(self.varmode, self.mode);
@@ -793,14 +880,13 @@ WA.Containers.groupContainer = function(fatherNode, domID, code, listener)
   this.setMessages = setMessages;
   function setMessages(params)
   {
-    console.log("setMessages", params);
     // 3 ways to put messages:
     // 1. is POPUP
     // 2. is any error domID
     // 3. is any field with its own error
     if (!params || !params.messages)
     {
-      showMessage(self.servererroralert, false);
+      showMessage(self.servererroralert + (params.message?"<br/>"+params.message.text:""), false);
       return;
     }
     var popup = '';
@@ -822,6 +908,20 @@ WA.Containers.groupContainer = function(fatherNode, domID, code, listener)
       showMessage(html, false);
     if (params.popup)
       alert(popup);
+  }
+
+  this.getValues = getValues;
+  function getValues()
+  {
+    var values = {};
+    for (var i=0, l=self.fields.length; i < l; i++)
+    {
+      if (self.fields[i].formtype == 'field')
+      {
+        values[self.fields[i].id] = self.fields[i].getValues();
+      }
+    }
+    return values;
   }
 
   this.getFieldValue = getFieldValue;

@@ -83,7 +83,6 @@ WA.Elements.ggraphElement = function(fatherNode, domID, code, listener)
     //console.log(self.state);
     //console.log(self.loaded);
     
-    
     if (googleready && self.state == 5 && self.loaded)
     {
       //console.log(self.data);
@@ -92,9 +91,19 @@ WA.Elements.ggraphElement = function(fatherNode, domID, code, listener)
         var data = new google.visualization.DataTable();
 
         for(var i=0; i<self.data.cols.length; i++)
-          data.addColumn({type: self.data.cols[i].t, label: self.data.cols[i].n});
+        {
+          try {
+            data.addColumn({type: self.data.cols[i].t, label: self.data.cols[i].n});
+          } catch(error) {
+            console.error("ERROR(pie column): ", error)
+          }
+        }
 
-        data.addRows(self.data.row);
+        try {
+          data.addRows(self.data.row);
+        } catch(error) {
+          console.error("ERROR(pie row): ", error)
+        }
 
         var chart = new google.visualization.PieChart(document.getElementById(self.domID));
         chart.draw(data, self.data.options);
@@ -102,11 +111,22 @@ WA.Elements.ggraphElement = function(fatherNode, domID, code, listener)
       if(self.data.combo)
       {
         var data = new google.visualization.DataTable();
-        
-        for(var i=0; i<self.data.cols.length; i++)
-          data.addColumn({type: self.data.cols[i].t, label: self.data.cols[i].n});
 
-        data.addRows(self.data.row);
+        for(var i=0; i<self.data.cols.length; i++)
+        {
+          try {
+            data.addColumn({type: self.data.cols[i].t, label: self.data.cols[i].n});
+          } catch(error) {
+            console.error("ERROR(combo column):", error)
+          }
+          
+        }
+
+        try {
+          data.addRows(self.data.row);
+        } catch(error) {
+          console.error("ERROR(combo row):", error);
+        }
 
         var chart = new google.visualization.SteppedAreaChart(document.getElementById(self.domID));
         chart.draw(data, self.data.options);
@@ -118,12 +138,35 @@ WA.Elements.ggraphElement = function(fatherNode, domID, code, listener)
         for(var i=0; i<self.data.cols.length; i++)
           {
             if(self.data.cols[i].rol)
-              data.addColumn({type: self.data.cols[i].t, label: self.data.cols[i].n, role:self.data.cols[i].rol});
+              try {
+                data.addColumn({type: self.data.cols[i].t, label: self.data.cols[i].n, role:self.data.cols[i].rol});
+              } catch(error) {
+                console.error("ERROR(acumulada column/rol):", error);
+              }
+              
             else  
-              data.addColumn({type: self.data.cols[i].t, label: self.data.cols[i].n});
+              if (!self.data.cols[i].t || self.data.cols[i].t == '') {
+                try {
+                  data.addColumn({type: 'number', label: self.data.cols[i].n});
+                } catch(error) {
+                  console.error("ERROR(acumulada column):", error);
+                }
+                
+              } else {
+                try {
+                  data.addColumn({type: self.data.cols[i].t, label: self.data.cols[i].n});
+                } catch(error) {
+                  console.error("ERROR(acumulada column):", error);
+                }
+                
+              }
           }
 
-        data.addRows(self.data.row);
+        try {
+          data.addRows(self.data.row);
+        } catch(error) {
+          console.error("ERROR(acumulada row):", error);
+        }
 
         var chart = new google.visualization.ColumnChart(document.getElementById(self.domID));
         chart.draw(data, self.data.options);
@@ -135,12 +178,24 @@ WA.Elements.ggraphElement = function(fatherNode, domID, code, listener)
         for(var i=0; i<self.data.cols.length; i++)
           {
             if(self.data.cols[i].rol)
-              data.addColumn({type: self.data.cols[i].t, label: self.data.cols[i].n, role:self.data.cols[i].rol});
+              try {
+                data.addColumn({type: self.data.cols[i].t, label: self.data.cols[i].n, role:self.data.cols[i].rol});
+              } catch(error) {
+                console.error("ERROR(columna column/rol):", error);
+              }
             else  
-              data.addColumn({type: self.data.cols[i].t, label: self.data.cols[i].n});
+              try {
+                data.addColumn({type: self.data.cols[i].t, label: self.data.cols[i].n});
+              } catch(error) {
+                console.error("ERROR(columna column):", error);
+              }
           }
 
-        data.addRows(self.data.row);
+        try {
+          data.addRows(self.data.row);
+        } catch(error) {
+          console.error("ERROR(columna row):", error);
+        }
 
         var chart = new google.visualization.ColumnChart(document.getElementById(self.domID));
         chart.draw(data, self.data.options);
@@ -150,9 +205,26 @@ WA.Elements.ggraphElement = function(fatherNode, domID, code, listener)
         var data = new google.visualization.DataTable();
         
         for(var i=0; i<self.data.cols.length; i++)
-          data.addColumn({type: self.data.cols[i].t, label: self.data.cols[i].n});
+        {
+          try {
+            data.addColumn({type: self.data.cols[i].t, label: self.data.cols[i].n});
+            //console.log("Add column:", {type: self.data.cols[i].t, label: self.data.cols[i].n});
+          } catch(error) {
+            console.error("ERROR:", error);
+            
+            if (!self.data.cols[i].t) {
+              data.addColumn({type: 'number', label: ''});
+            } else {
+              data.addColumn({type: self.data.cols[i].t, label: self.data.cols[i].n});
+            }
+          }
+        }
 
-        data.addRows(self.data.row);
+        try {
+          data.addRows(self.data.row);
+        } catch(error){
+          data.addRows(new Array());
+        }
 
         var chart = new google.visualization.LineChart(document.getElementById(self.domID));
         chart.draw(data, self.data.options);
@@ -163,17 +235,25 @@ WA.Elements.ggraphElement = function(fatherNode, domID, code, listener)
         
         for(var i=0; i<self.data.cols.length; i++)
         {
-          data.addColumn({type: self.data.cols[i].t, label: self.data.cols[i].n});
+          try {
+            data.addColumn({type: self.data.cols[i].t, label: self.data.cols[i].n});
+          } catch(error) {
+            console.error("ERROR(cifra column):", error);
+          }
+          
         }
 
-        data.addRows(self.data.row);
-        
+        try {
+          data.addRows(self.data.row);
+        } catch(error) {
+          console.error("ERROR(cifra row):", error);
+        }
+                
         var chart = new google.visualization.Table(document.getElementById(self.domID));
         chart.draw(data, self.data.options);
       }
   
       //console.log('Paint graph ' + self.domID);
-      
     }
   }
   
@@ -185,22 +265,34 @@ WA.Elements.ggraphElement = function(fatherNode, domID, code, listener)
     // size mode for responsive design, not activated for now
   }
   
-
   function getData(r)
   {
-    self.data = WA.JSON.decode(r.responseText);
-    self.loaded = true;
-    self.countload = 0;
-    fillData();
+    if (validaJson(r.responseText)) {
+      self.data = WA.JSON.decode(r.responseText);
+      self.loaded = true;
+      self.countload = 0;
+      WA.toDOM(self.domID).innerHTML = '<div class="loading"></div>';
+      fillData();
+    }
+  }
+
+  // funcion para validar la estructura del JSON
+  const validaJson = (txt) => {
+    try {
+      JSON.parse(txt);
+      return true;
+    } catch (error) {
+      console.error("ERROR JSON:", error);
+      return false;
+    }
   }
 
   // any record change should call this
   this.fillData = fillData;
-  function fillData(newdataset)
+  async function fillData(newdataset)
   {
     //console.log('into filldata ' + self.domID);
     //console.log(self.serverlistener);
-    
     if (!newdataset && !self.loaded && self.serverlistener)
     {
       if (self.countload++ > 3)
@@ -211,10 +303,11 @@ WA.Elements.ggraphElement = function(fatherNode, domID, code, listener)
 
       // ask to the server the data
       var request = WA.Managers.ajax.createRequest(WA.Managers.wa4gl.url + WA.Managers.wa4gl.prelib + self.app.applicationID + WA.Managers.wa4gl.premethod + self.id + WA.Managers.wa4gl.preformat + WA.Managers.wa4gl.format, 'POST', 'Order=get', getData, true);
-      WA.toDOM(self.domID).innerHTML = '<div class="loading"></div>';
+    //WA.toDOM(self.domID).innerHTML = '<div class="loading"></div>';
+
       return;
     }
-
+    
     var dataset = null;
     if (newdataset)
     {
@@ -271,17 +364,6 @@ WA.Elements.ggraphElement = function(fatherNode, domID, code, listener)
     self.loaded = false;
     start();
   }
-
-
-
-
-
-
-
-
-
-
-
 
   this.stop = stop;
   function stop()

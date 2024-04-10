@@ -598,6 +598,8 @@ WA.Managers.wa4gl = new function()
     if (app.domNode == null)
       throw 'Error, the application could not be launched.';
 
+    fatherNode.application = app;
+
     self.applications[applicationID+'|'+instanceID] = app;
     app.start(params);
 

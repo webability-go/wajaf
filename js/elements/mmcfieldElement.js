@@ -36,6 +36,7 @@ WA.Elements.mmcfieldElement = function(fatherNode, domID, code, listener)
   this.edition = false;
   this.focus = false;
 
+  this.actionlistener = null;
   this.mode = 0;
   // Behaviour on modes
   this.isvisible = [];
@@ -62,8 +63,11 @@ WA.Elements.mmcfieldElement = function(fatherNode, domID, code, listener)
   this.size = (this.code.attributes.size?this.code.attributes.size:'');
   // defaultvalue is the default for insert mode (code from the code, set below)
   // value is the value set in this mode by setValues, if we want to undo changes
-  this.defaultvalue = this.value = '';
+  this.defaultvalue = '';
+  this.value = this.newvalue = undefined;
   this.path = (this.code.attributes.path?this.code.attributes.path:'');
+  this.accept = (this.code.attributes.accept?this.code.attributes.accept:'');
+  this.multifile = !!(this.code.attributes.multifile == "yes");
 
   // errors on checks
   this.errorexternal = false;  // true when set manually an error
@@ -91,39 +95,62 @@ WA.Elements.mmcfieldElement = function(fatherNode, domID, code, listener)
   if (self.code.data)
     this.domNodeLabel.innerHTML = self.code.data;
 
-  this.domNodeImage = WA.createDomNode('img', domID+'_image', '');
-  this.domNodeImage.style = "float: left; max-width: 50; max-height: 50px; margin-right: 10px;";
-  this.domNode.appendChild(this.domNodeImage);
+  this.domNodeUpload = WA.createDomNode('div', domID+'_upload', 'upload');
+  this.domNodeUpload.style = "float: left; width: "+this.size+"px; text-align: center;";
+  this.domNode.appendChild(this.domNodeUpload);
+  this.domNodeUpload.innerHTML = "<div class=\"upload-icon\" style=\"display: inline-block;\"></div><br />Buscar o soltar un archivo aquí.";
+  this.domNodeUpload.addEventListener("click", clickupload);
+  this.domNodeUpload.addEventListener("dragover", dragover);
+  this.domNodeUpload.addEventListener("dragleave", dragend);
+  this.domNodeUpload.addEventListener("dragend", dragend);
+  this.domNodeUpload.addEventListener("drop", drop);
 
-  this.domNodeValue = WA.createDomNode('div', domID+'_value', 'value');
-  this.domNode.appendChild(this.domNodeValue);
+  this.domNodeUploading = WA.createDomNode('div', domID+'_uploading', 'uploading');
+  this.domNodeUploading.style = "float: left; width: "+this.size+"px;";
+  this.domNode.appendChild(this.domNodeUploading);
 
+  this.domNodeUploadingIcon = WA.createDomNode('img', domID+'_uploadingicon', 'uploading-icon');
+  this.domNodeUploading.appendChild(this.domNodeUploadingIcon);
+  this.domNodeUploadingName = WA.createDomNode('div', domID+'_uploadingname', 'uploading-name');
+  this.domNodeUploading.appendChild(this.domNodeUploadingName);
+  this.domNodeUploadingPerc = WA.createDomNode('div', domID+'_uploadinperc', 'uploading-perc');
+  this.domNodeUploading.appendChild(this.domNodeUploadingPerc);
+  this.domNodeUploadingBar = WA.createDomNode('div', domID+'_uploadingbar', 'uploading-bar');
+  this.domNodeUploading.appendChild(this.domNodeUploadingBar);
+  this.domNodeUploadingProgress = WA.createDomNode('div', domID+'_uploadingprogress', 'uploading-progressbar');
+  this.domNodeUploadingBar.appendChild(this.domNodeUploadingProgress);
+
+  this.domNodeUploaded = buildUploadedTemplate("");
+  this.domNode.appendChild(this.domNodeUploaded);
+  this.domNodeIcon = WA.browser.findNodeByClass(this.domNodeUploaded, 'uploaded-icon');
+  this.domNodeImage = WA.browser.findNodeByClass(this.domNodeUploaded, 'uploaded-image');
+  this.domNodeValue = WA.browser.findNodeByClass(this.domNodeUploaded, 'uploaded-value');
+  this.domNodeDelete = WA.browser.findNodeByClass(this.domNodeUploaded, 'uploaded-delete');
+
+  // the file is the name of the file, already into server
   this.domNodeFile = WA.createDomNode('input', domID+'_file', 'field');
   this.domNodeFile.type = (this.code.attributes.external?'text':'hidden');
+  this.domNodeFile.style.display = 'none';
   this.domNodeFile.name = this.id + '_file';
   this.domNode.appendChild(this.domNodeFile);
 
+  // the download file is the new name of the file if any change (show in upload/modify if external authorized)
+  this.domNodeDownload = WA.createDomNode('input', domID+'_download', 'field');
+  this.domNodeDownload.type = 'text';
+  this.domNodeDownload.style.display = 'none';
+  this.domNodeDownload.name = this.id + '_download';
+  this.domNode.appendChild(this.domNodeDownload);
+  
   this.domNodeField = WA.createDomNode('input', domID+'_field', 'field');
   this.domNodeField.type = 'file';
+  if (this.multifile)
+    this.domNodeField.multiple = true;
+  this.domNodeField.style.display = "none";
   this.domNodeField.name = this.id;
-  // POR EL MOMENTO ES MONO IMAGE (EXTENDER CON DIV DE LO SUBIDO A MULTI IMAGE)
-  //  this.domNodeField.multiple = true;
-  this.domNodeField.accept = "image/x-png, image/gif, image/jpeg, image/jpg";
+  this.domNodeField.accept = this.accept;
   if (this.size)
     this.domNodeField.style.width = this.size+'px';
   this.domNode.appendChild(this.domNodeField);
-
-  this.domNodeDownload = WA.createDomNode('input', domID+'_download', 'field');
-  this.domNodeDownload.type = 'hidden';
-  this.domNodeDownload.name = this.id + '_download';
-  this.domNode.appendChild(this.domNodeDownload);
-
-  var br = WA.createDomNode('br');
-  this.domNode.appendChild(br);
-  
-  this.domNodeDelete = WA.createDomNode('div', domID+'_delete', this.classes.classname + 'delete');
-  this.domNodeDelete.innerHTML = (this.code.attributes.deletebutton?this.code.attributes.deletebutton:'[Delete]');
-  this.domNode.appendChild(this.domNodeDelete);
 
   this.domNodeHelp = WA.createDomNode('p', domID+'_help', 'help');
   this.domNode.appendChild(this.domNodeHelp);
@@ -132,6 +159,11 @@ WA.Elements.mmcfieldElement = function(fatherNode, domID, code, listener)
 
   this.domNodeError = WA.createDomNode('p', domID+'_error', 'error');
   this.domNode.appendChild(this.domNodeError);
+
+  // create multifile list 
+  this.domNodeFiles = WA.createDomNode('div', domID + '_files', 'files');
+  this.domNodeFiles.style = "width: " + this.size + "px; position: relative;";
+  this.domNode.appendChild(this.domNodeFiles);
 
   // responsive design based on container available size, is '', ' medium' or ' tiny'
   // Not activated for now
@@ -156,6 +188,27 @@ WA.Elements.mmcfieldElement = function(fatherNode, domID, code, listener)
   this.addEvent('start', start);
   this.addEvent('stop', stop);
 
+  function callListener(action)
+  {
+    if (self.actionlistener)
+      self.actionlistener(action, self.domNodeImage.src, self.domNodeFile.value);
+  }
+
+  function buildUploadedTemplate(id) {
+    var domNodeUploaded = WA.createDomNode('div', domID + '_uploaded' + id, 'uploaded');
+    domNodeUploaded.style = (self.multifile ? "" : "float: left; ") + "width: " + self.size + "px;";
+    var domNodeIcon = WA.createDomNode('img', domID + '_icon', 'uploaded-icon');
+    domNodeUploaded.appendChild(domNodeIcon);
+    var domNodeImage = WA.createDomNode('img', domID + '_image', 'uploaded-image');
+    domNodeUploaded.appendChild(domNodeImage);
+    var domNodeValue = WA.createDomNode('div', domID + '_value', 'uploaded-value');
+    domNodeUploaded.appendChild(domNodeValue);
+    var domNodeDelete = WA.createDomNode('div', domID + '_delete', 'uploaded-delete');
+    domNodeDelete.innerHTML = (self.code.attributes.deletebutton ? self.code.attributes.deletebutton : '[Delete]');
+    domNodeUploaded.appendChild(domNodeDelete);
+    return domNodeUploaded;
+  }
+
   function resize()
   {
     WA.Elements.mmcfieldElement.source.resize.call(self);
@@ -171,6 +224,15 @@ WA.Elements.mmcfieldElement = function(fatherNode, domID, code, listener)
       self.sizemode = ' tiny';
     checkClass();
 */
+  }
+
+  // specific element functions
+  this.addListener = addListener;
+  function addListener(listener)
+  {
+    // Send actions of the group to the listener
+    self.actionlistener = listener;
+    callListener('add');
   }
 
   this.registerSynchronize = registerSynchronize;
@@ -196,6 +258,64 @@ WA.Elements.mmcfieldElement = function(fatherNode, domID, code, listener)
   this.checkStatus = checkStatus;
   function checkStatus()
   {
+    if (self.newvalue || self.value || self.mode == 3 || self.mode == 4)
+    {
+      self.domNodeUpload.style.display = 'none';
+      self.domNodeUploading.style.display = 'none';
+      self.domNodeUploaded.style.display = 'block';
+
+      if (self.newvalue) {
+        if (self.multifile) {
+          for (var i = 0; i < self.newvalue.temporal.length; i++) {
+            var domNodeUploaded = buildUploadedTemplate(i);
+            self.domNodeFiles.appendChild(domNodeUploaded);
+            console.log("ICONNAME=", self.newvalue.iconname[i])
+
+            var nodeicon = WA.browser.findNodeByClass(domNodeUploaded, 'uploaded-icon');
+            nodeicon.src = self.newvalue.iconname[i];
+            var nodeimage = WA.browser.findNodeByClass(domNodeUploaded, 'uploaded-image');
+            if (self.newvalue.image[i])
+            {
+              nodeimage.src = self.newvalue.image[i];
+              nodeimage.style.display = "block";
+            }
+            var nodevalue = WA.browser.findNodeByClass(domNodeUploaded, 'uploaded-value');
+            nodevalue.innerHTML = self.newvalue.filename[i];
+//            var nodedelete = WA.browser.findNodeByClass(domNodeUploaded, 'uploaded-delete');
+          }
+        } else {
+          self.domNodeIcon.src = self.newvalue.iconname;
+          self.domNodeValue.innerHTML = self.newvalue.filename;
+          self.domNodeDownload.value = self.newvalue.temporal;
+          if (self.newvalue.image) {
+            self.domNodeImage.src = self.newvalue.image;
+            self.domNodeImage.style.display = "block";
+          } else {
+            self.domNodeImage.style.display = "none";
+          }
+        }
+      } else if (self.value) {
+        self.domNodeIcon.src = self.value.iconname;
+        self.domNodeValue.innerHTML = self.value.filename;
+        self.domNodeFile.value = self.value.value;
+        if (self.value.image) {
+          self.domNodeImage.src = self.value.image;
+          self.domNodeImage.style.display = "block";
+        } else {
+          self.domNodeImage.style.display = "none";
+        }
+      }
+      if (self.mode == 1 || self.mode == 2)
+        self.domNodeDelete.style.display = 'block';
+      else
+        self.domNodeDelete.style.display = 'none';
+        
+    } else {
+      self.domNodeUpload.style.display = 'block';
+      self.domNodeUploading.style.display = 'none';
+      self.domNodeUploaded.style.display = 'none';
+    }
+
     for (var i in self.errors)
       self.errors[i] = false;
 
@@ -230,15 +350,14 @@ WA.Elements.mmcfieldElement = function(fatherNode, domID, code, listener)
       self.domNodeField.disabled == false;
     if (self.domNodeField.readOnly == true)
       self.domNodeField.readOnly == false;
-    var value = self.domNodeFile.value;
-    if (self.value != undefined && value == self.value && self.mode != 1)
+    if (self.mode != 1 && (self.newvalue || self.value))
     {
       self.status = 0;
       self.domNodeError.innerHTML = '';
       return;
     }
     self.status = 1;
-    if (self.notnull[self.mode] && value == '')
+    if (self.notnull[self.mode] && !self.value && !self.newvalue)
     {
       self.status = 2;
       self.errors.statusnotnull = true;
@@ -249,7 +368,7 @@ WA.Elements.mmcfieldElement = function(fatherNode, domID, code, listener)
     if (self.code[0] != undefined && self.code[0].tag != undefined && self.code[0].tag == 'check')
       eval(self.code[0].data);
     
-    console.log(self.errors);
+    console.log("STATUS=", self.status, self.errors);
   }
 
   this.checkClass = checkClass;
@@ -324,9 +443,6 @@ WA.Elements.mmcfieldElement = function(fatherNode, domID, code, listener)
   function setMode(mode, keep)
   {
     self.mode = mode;
-    console.log('setMODE');
-    console.log(mode);
-    console.log(keep);
 
     // Set all the data based on the mode
     if (!self.isvisible[mode])
@@ -341,12 +457,11 @@ WA.Elements.mmcfieldElement = function(fatherNode, domID, code, listener)
     if (keep)
       self.domNodeValue.innerHTML = self.domNodeFile.value;
 
-    self.domNodeValue.style.display = (self.info[mode]?'':'none');
-    self.domNodeFile.style.display = (self.info[mode]?'none':'');
-    self.domNodeField.style.display = (self.info[mode]?'none':'');
+    // self.domNodeValue.style.display = (self.info[mode]?'':'none');
+    // self.domNodeFile.style.display = (self.info[mode]?'none':'');
+    // self.domNodeField.style.display = (self.info[mode]?'none':'');
     self.domNodeError.style.display = (self.info[mode]?'none':'');
     self.domNodeDelete.style.display = (self.info[mode]?'none':'');
-
     self.domNodeHelp.style.display = (self.help[mode]?'':'none');
 
     self.edition = !self.info[mode];
@@ -363,20 +478,61 @@ WA.Elements.mmcfieldElement = function(fatherNode, domID, code, listener)
       return;
     if (self.mode == 1)
     {
-      self.value = self.domNodeField.value = self.domNodeValue.innerHTML = self.defaultvalue;
+      self.newvalue = self.value = null;
     }
     else if (self.mode == 2 || self.mode == 3)
     {
-      self.domNodeValue.innerHTML = self.domNodeField.value = self.value;
+      self.newvalue = null;
     }
     checkAll();
   }
 
+  function clickupload(e)
+  {
+    self.domNodeField.click();
+  }
+
+  function dragover(e)
+  {
+    e.preventDefault();
+    self.domNodeUpload.classList.add('dragover');
+  }
+
+  function dragend(e)
+  {
+    self.domNodeUpload.classList.remove('dragover');
+  }
+
+  function drop(e)
+  {
+    e.preventDefault();
+    if (e.dataTransfer.files.length)
+    {
+      // only 1 to download
+      self.domNodeField.files = e.dataTransfer.files;
+      dragend(e);
+      var event = new Event('change');
+      self.domNodeField.dispatchEvent(event);
+      return;
+    }
+    dragend(e);
+  }
+
   function changeImage(e)
   {
-    console.log('changeImage');
+    if (this.files.length == 0)
+      return;
+
+    console.log('changeImage, UPLOADING');
     
-    
+    self.domNodeUpload.style.display = 'none';
+    self.domNodeUploading.style.display = 'block';
+    self.domNodeUploaded.style.display = 'none';
+
+    self.domNodeUploadingName.innerHTML = this.files[0].name;
+    self.domNodeUploadingPerc.innerHTML = "0.0%";
+    self.domNodeUploadingProgress.style.width = "0";
+  
     // enviar un POST al group owner
     formdata = new FormData();
 
@@ -387,7 +543,7 @@ WA.Elements.mmcfieldElement = function(fatherNode, domID, code, listener)
     {
       file = this.files[i];
 
-      if (!!file.type.match(/image.*/))
+//      if (!!file.type.match(/image.*/) || !!file.type.match(/video.*/))
       {
         if ( window.FileReader )
         {
@@ -400,8 +556,8 @@ WA.Elements.mmcfieldElement = function(fatherNode, domID, code, listener)
         }
         if (formdata)
         {
-          formdata.append("images[]", file);
-          formdata.append(self.group.varorder, "image");
+          formdata.append("file", file);
+          formdata.append(self.group.varorder, "file");
           formdata.append(self.group.varkey, self.group.currentkey);
           formdata.append(self.group.varfield, self.id);
         }
@@ -411,32 +567,47 @@ WA.Elements.mmcfieldElement = function(fatherNode, domID, code, listener)
     if (formdata)
     {
       var request = WA.Managers.ajax.createRequest(WA.Managers.wa4gl.url + WA.Managers.wa4gl.prelib + self.app.applicationID + WA.Managers.wa4gl.premethod + self.id + WA.Managers.wa4gl.preformat + WA.Managers.wa4gl.format, 'POST', null, getResult, false);
+      request.setUploadListener(listenUpload);
       request.send(formdata);
     }
   }
-  
+
+  function listenUpload(e)
+  {
+    var progress = e.loaded / e.total * 100;
+    self.domNodeUploadingProgress.style.width = "" + progress.toFixed(1) + "%";
+    self.domNodeUploadingPerc.innerHTML = "" + progress.toFixed(1) + "%";
+  }
+
   function getResult(response)
   {
-    console.log(response);
     var code = WA.JSON.decode(response.responseText);
-    if (code.status != 'OK')
+    if (!code.success)
+    {
       alert(code.message);
+    }
     else
     {
-      self.domNodeImage.src = code.tempname;
-      self.domNodeDownload.value = code.name;
-      self.domNodeFile.value = code.name;
-      self.value = '';
+      if (!self.multifile || !self.newvalue)
+        self.newvalue = code;
+      else
+      { // CONCATENATE NEW ARRIVED FILES
+          self.newvalue = code;
+      }
+      callListener('upload');
     }
-    checkStatus();
+    self.domNodeField.type = '';
+    self.domNodeField.type = 'file';
+    checkAll();
   }
   
   function deleteImage(e)
   {
-    self.value = self.domNodeFile.value = '';
-    self.domNodeImage.src = '';
-    self.domNodeValue.innerHTML = '';
-    self.domNodeDelete.style.display = 'none';
+    if (self.newvalue) {
+      self.newvalue = null;
+    } else {
+      self.value = null;
+    }
     checkAll();
   }
   
@@ -475,34 +646,17 @@ WA.Elements.mmcfieldElement = function(fatherNode, domID, code, listener)
   this.getValues = getValues;
   function getValues()
   {
-    if (self.domNodeDownload.value)
-      return 'temp:'+self.domNodeDownload.value;
-    return self.domNodeFile.value;
+    if (self.newvalue)
+      return self.newvalue;
+    return self.value;
   }
 
   this.setValues = setValues;
   function setValues(values)
   {
-    console.log('MMCFIELD VALUE = ');
-    console.log(values);
     self.firstview = true;
-    self.value = self.domNodeFile.value = values;
-    if (values != undefined && values != null && !!values)
-    {
-      if (values.substr(0,6) == 'http:/' || values.substr(0,7) == 'https:/')
-      {
-        // if accept external values, check if starts with http*
-        self.domNodeImage.src = values;
-        self.domNodeValue.innerHTML = values;
-      }
-      else
-      {
-        self.domNodeImage.src = self.path + values;
-        self.domNodeValue.innerHTML = values;
-      }
-    }
-    else
-      reset();
+    self.value = values;
+    self.newvalue = null;
     checkAll();
   }
 

@@ -8,7 +8,7 @@ func NewLOVFieldElement(id string) LOVFieldElement {
 	e.SetID(id)
 
 	e.RegisterKnownAttributes([]string{"display", "style", "classname", "left", "width", "right", "top", "height", "bottom",
-		"size", "visible", "info", "disabled", "readonly", "notnull", "helpmode"})
+		"size", "visible", "info", "disabled", "readonly", "notnull", "helpmode", "multiselect", "radiobutton"})
 	//	e.RegisterKnownMessages([]string{"defaultvalue", "helpdescription", "statusnotnull", "statuscheck"})
 	e.RegisterKnownChildren([]string{"options", "code"})
 

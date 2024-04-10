@@ -61,10 +61,7 @@ WA.Managers.ajax = new function()
   {
     callNotify('create');
     var r = new WA.Managers.ajax.Request(url, method, data, feedback, dosend, self.listener, self.statefeedback, self.timeoutabort);
-    if (r)
-    {
-      self.requests.push(r);
-    }
+    self.requests.push(r);
     return r;
   }
 
@@ -151,6 +148,7 @@ WA.Managers.ajax.Request = function(url, method, data, feedback, autosend, liste
   this.timerabort = null;
   this.state = 0;               // 0 = nothing, 1 = sent and waiting, 2 = finished, 3 = error
   this.listener = listener;
+  this.uploadlistener = null;
 
   try { this.request = new XMLHttpRequest(); }
   catch(e)
@@ -171,6 +169,12 @@ WA.Managers.ajax.Request = function(url, method, data, feedback, autosend, liste
     {
       self.listener(event, data);
     }
+  }
+
+  this.setUploadListener = setUploadListener;
+  function setUploadListener(listener)
+  {
+    self.uploadlistener = listener;
   }
 
   // Special parameters
@@ -259,6 +263,9 @@ WA.Managers.ajax.Request = function(url, method, data, feedback, autosend, liste
       return;
 
     self.request.onreadystatechange = process;
+    if (self.uploadlistener) {
+      self.request.upload.addEventListener("progress", self.uploadlistener);
+    }
     if (self.timeoutabort)
       self.timerabort = setTimeout( function() { timeabort(); }, self.timeoutabort );
     try
@@ -278,9 +285,7 @@ WA.Managers.ajax.Request = function(url, method, data, feedback, autosend, liste
       if (self.method == 'POST')
       {
         if (!!form)
-        {
           self.request.send(form);
-        }
         else
         {
           var parameters = buildParametersPost();
