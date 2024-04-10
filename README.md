@@ -1,7 +1,6 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/webability-go/wajaf)](https://goreportcard.com/report/github.com/webability-go/wajaf)
 [![GoDoc](https://godoc.org/github.com/webability-go/wajaf?status.png)](https://godoc.org/github.com/webability-go/wajaf)
-[![GolangCI](https://golangci.com/badges/github.com/webability-go/wajaf.svg)](https://golangci.com)
 
 WAJAF for GO v0.1
 =============================
@@ -52,7 +51,7 @@ For objects:
 - WA.extend: Will extends an object from another (inheritance).
 - WA.clone: Will clone an object and all its children.
 -- If you dont care the type of object but only its attributes, you can use WA.clone(object, true)
--- If you use the normal method WA.clone(object), it will close the whole object with attributes and methods.
+-- If you use the normal method WA.clone(object), it will clone the whole object with attributes and methods.
 - WA.sizeof: Will calculates the size (number of attributes) of an object.
 
 For DOM nodes:
@@ -108,6 +107,31 @@ TO DO:
 
 Version Changes Control
 =======================
+
+v0.3.0 - 2024-04-09
+------------------------
+- Added searcheabletextfieldElement, go and JS modified
+- mmcFieldElement now supports multifile upload too, and a template to present information
+- lovFieldElement now supports radio and checkboxes, and multiple select
+- groupContainer now supports sub-forms for master-details administration screens with templates to format detail records
+- Errors corrected con crowser getNodeDocumentLeft and getNodeDocumentTop to be correctly calculated with scroll offsets
+- Added function findNodeByClass in browser class
+- Added coretemplate.js to inject templates with data sets
+- Added floatingContainer for floating windows in page
+- Added resize of columns, order of columns and drag and drop for order into gridContainer
+- Error corrected on tabContainer when unloading the instance 
+- TreeContainer now supports dragging and hover, sinchronized with server with the listener
+- textfieldElement and textareafieldElement corrected to display correctly the number of words and letters
+- New classes into css for new components
+
+
+v0.1.4 - 2022-12-02
+------------------------
+- Added listener option to AjaxRequest to follow the upload of request to the server
+- Error corrected in the 4GL Manager, the node with an inner application was not linking the application attribute
+- ggraphElement has been changed to control errors with try-catch when calling the google library
+- mmcFieldElement has been modified to work as expected and be able to manage any kind of files
+- gridContainer has been modified to be able to order the information by columns
 
 v0.1.3 - 2022-06-12
 ------------------------

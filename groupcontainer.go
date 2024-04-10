@@ -13,7 +13,7 @@ func NewGroupContainer(id string) *GroupContainer {
 
 	c.RegisterKnownAttributes([]string{"display", "style", "classname", "classnamezone",
 		"left", "width", "right", "top", "height", "bottom", "haslistener",
-		"varmode", "varorder", "varkey",
+		"varmode", "varorder", "varkey", "maingroup",
 		"mode", "authmodes", "key"})
 	//	c.RegisterKnownMessages([]string{"alertmessage", "servermessage", "titleinsert", "titleupdate", "titledelete", "titleview", "insertok", "updateok", "deleteok"})
 	c.RegisterKnownChildren([]string{"zone", "dataset", "event", "help"})

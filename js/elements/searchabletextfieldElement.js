@@ -20,10 +20,10 @@
     along with WAJAF.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-WA.Elements.textfieldElement = function(fatherNode, domID, code, listener)
+WA.Elements.searchabletextfieldElement = function(fatherNode, domID, code, listener)
 {
   var self = this;
-  WA.Elements.textfieldElement.sourceconstructor.call(this, fatherNode, domID, code, 'div', { classname:'textfield' }, listener);
+  WA.Elements.searchabletextfieldElement.sourceconstructor.call(this, fatherNode, domID, code, 'div', { classname:'textfield' }, listener);
 
   this.id = this.code.attributes.id; // name of field, to use to send to the server
 
@@ -107,13 +107,23 @@ WA.Elements.textfieldElement = function(fatherNode, domID, code, listener)
   this.domNodeValue = WA.createDomNode('div', domID+'_value', 'value');
   this.domNode.appendChild(this.domNodeValue);
 
-  this.domNodeField = WA.createDomNode('input', domID+'_field', 'field');
-  this.domNodeField.type = this.texttype=='masked'?'password':'text';
-  this.domNodeField.name = this.id;
+  this.domNodeSearch = WA.createDomNode('input', domID + '_search', 'field');
+  this.domNodeSearch.type = this.texttype == 'masked' ? 'password' : 'text';
+  this.domNodeSearch.autocomplete = "off";
   if (this.maxlength)
-    this.domNodeField.maxLength = this.maxlength;
+    this.domNodeSearch.maxLength = this.maxlength;
   if (this.size)
-    this.domNodeField.style.width = this.size+'px';
+    this.domNodeSearch.style.width = this.size + 'px';
+  this.domNode.appendChild(this.domNodeSearch);
+
+  this.domNodeList = WA.createDomNode('div', domID + '_list', 'list');
+  this.domNodeList.style = "width: " + this.size + "px;";
+  this.domNode.appendChild(this.domNodeList);
+
+  this.domNodeField = WA.createDomNode('input', domID+'_field', 'selected');
+  this.domNodeField.type = 'text';
+  this.domNodeField.name = this.id;
+  this.domNodeField.readOnly = true;
   this.domNode.appendChild(this.domNodeField);
 
   this.domNodeCount = WA.createDomNode('span', domID+'_count', 'count');
@@ -126,6 +136,8 @@ WA.Elements.textfieldElement = function(fatherNode, domID, code, listener)
 
   this.domNodeError = WA.createDomNode('p', domID+'_error', 'error');
   this.domNode.appendChild(this.domNodeError);
+  this.domNodeResult = WA.createDomNode('div', domID + '_result', 'result');
+  this.domNode.appendChild(this.domNodeResult);
 
   // responsive design based on container available size, is '', ' medium' or ' tiny'
   // Not activated for now
@@ -157,7 +169,7 @@ WA.Elements.textfieldElement = function(fatherNode, domID, code, listener)
 
   function resize()
   {
-    WA.Elements.textfieldElement.source.resize.call(self);
+    WA.Elements.searchabletextfieldElement.source.resize.call(self);
     // size mode for responsive design, not activated for now
 /*
     var RW = WA.browser.getNodeOuterWidth(self.father.domNode);
@@ -436,6 +448,80 @@ WA.Elements.textfieldElement = function(fatherNode, domID, code, listener)
       checkAll();
   }
 
+  function filllist(list) {
+    self.domNodeList.innerHTML = "";
+    for (var i in list) {
+      var item = WA.createDomNode('div', self.id + '_list_' + i, 'item');
+      item.innerHTML = i + " / " + list[i];
+      item.value = list[i];
+      item.key = i;
+      item.onclick = function() {
+        console.log("CLICK", this.key);
+        self.domNodeSearch.value = this.value;
+        self.domNodeField.value = this.key;
+        self.domNodeList.style.display = 'none';
+        self.haslist = false;
+        self.showlist = false;
+        checkAll(true); // check and notify group
+        search();
+      }
+      item.onmouseover = function () {
+        this.className = 'item selected';
+        self.itemover = true;
+      }
+      item.onmouseout = function () {
+        this.className = 'item';
+        self.itemover = false;
+      }
+      self.domNodeList.appendChild(item);
+    }
+    self.haslist = true;
+    self.showlist = true;
+    self.domNodeList.style.display = 'block';
+  }
+
+  function getResponse(request) {
+
+    var code = WA.JSON.decode(request.responseText);
+    if (code.status != 1)
+    {
+      self.status = 2;
+      self.errors.statusnotnull = true;
+    }
+    else
+      self.status = 1;
+    self.checkClass();
+    
+    self.domNodeField.value = code.key;
+    self.domNodeResult.innerHTML = code.message;
+
+    if (code.list && !code.key) {
+      // Fill in the list
+      filllist(code.list);
+    } else {
+      self.haslist = false;
+      self.showlist = false;
+      self.domNodeList.style.display = 'none';
+      if (code.value)
+        self.domNodeSearch.value = code.value;
+    }
+
+    checkAll(true);
+  }
+
+  this.sendServer = sendServer;
+  function sendServer(order, code, response) {
+    // send information to server based on mode
+    if (!response) response = getResponse;
+    var request = WA.Managers.ajax.createRequest(WA.Managers.wa4gl.url + WA.Managers.wa4gl.prelib + self.app.applicationID + WA.Managers.wa4gl.premethod + self.id + WA.Managers.wa4gl.preformat + WA.Managers.wa4gl.format, 'POST', 'Order=' + order + (self.params ? '&' + self.params : ''), response, false);
+    if (request) {
+      for (var i in code) {
+        request.addParameter(i, code[i]);
+      }
+      request.send();
+    }
+  }
+
   this.reset = reset;
   function reset()
   {
@@ -443,38 +529,63 @@ WA.Elements.textfieldElement = function(fatherNode, domID, code, listener)
       return;
     if (self.mode == 1)
     {
-      self.value = self.domNodeField.value = self.defaultvalue;
+      self.value = self.domNodeField.value = self.domNodeSearch.value = self.defaultvalue;
       self.domNodeValue.innerHTML = self.auto?self.automessage:self.defaultvalue;
     }
     else if (self.mode == 2 || self.mode == 3)
     {
-      self.domNodeValue.innerHTML = self.domNodeField.value = self.value;
+      self.domNodeValue.innerHTML = self.domNodeField.value = self.domNodeSearch.value = self.value;
     }
     checkAll();
   }
 
-  function onkeyup()
+  this.search = search;
+  function search()
   {
+    // if ENTER, send
+    self.sendServer('search', { id: self.code.attributes.id, key: self.domNodeField.value, q: self.domNodeSearch.value });
+  }
+
+  function onkeyup(e)
+  {
+    console.log("KEY UP", e, self.id);
     self.firstview = false;
     self.errorexternal = false;
-    if ((self.value == undefined || self.value == null || self.value == '') && self.domNodeField.value == '')
+    if ((self.value == undefined || self.value == null || self.value == '') && self.domNodeSearch.value == '')
       self.firstview = true;
-    else if (self.value != undefined && self.value != null && self.domNodeField.value == self.value)
+    else if (self.value != undefined && self.value != null && self.domNodeSearch.value == self.value)
       self.firstview = true;
     setTimeout( function() { checkAll(true); }, 0); // check and notify group
     setTimeout( function() { self.callEvent('keyup'); }, 0); // call event key up
+    self.domNodeField.value = "";
+    search();
   }
 
   function onblur(e)
   {
     self.focus = false;
-    checkAll(true); // check and notify group
-    self.callEvent('blur');
-  }
+    setTimeout(function() {
+        if (self.haslist && !self.itemover) {
+          self.domNodeList.style.display = 'none';
+          self.showlist = false;
+        }
+    }, 1);
+    if (!self.haslist)
+    {
+      checkAll(true); // check and notify group
+      self.callEvent('blur');
+      search();
+    }
+}
 
   function onfocus(e)
   {
     self.focus = true;
+    if (self.haslist) {
+      console.log("FOCUS")
+      self.domNodeList.style.display = 'block';
+      self.showlist = true;
+    }
     checkAll(true); // check and notify group
     if (self.group)
       self.father.setStatus(1);
@@ -483,9 +594,11 @@ WA.Elements.textfieldElement = function(fatherNode, domID, code, listener)
 
   function start()
   {
-    WA.Managers.event.on('keyup', self.domNodeField, onkeyup, true);
-    WA.Managers.event.on('focus', self.domNodeField, onfocus, true);
-    WA.Managers.event.on('blur', self.domNodeField, onblur, true);
+    console.log("START", self.id, self.domNodeSearch);
+
+    WA.Managers.event.on('keyup', self.domNodeSearch, onkeyup, true);
+    WA.Managers.event.on('focus', self.domNodeSearch, onfocus, true);
+    WA.Managers.event.on('blur', self.domNodeSearch, onblur, true);
 
     // If we are controled by another field
     if (self.code.attributes.synchronizer)
@@ -509,7 +622,7 @@ WA.Elements.textfieldElement = function(fatherNode, domID, code, listener)
     if (self.group)
     {
       self.firstview = true;
-      self.value = self.domNodeField.value = values;
+      self.value = self.domNodeField.value = self.domNodeSearch.value = values;
       if (values != undefined && values != null)
         self.domNodeValue.innerHTML = values;
       else
@@ -517,7 +630,10 @@ WA.Elements.textfieldElement = function(fatherNode, domID, code, listener)
       checkAll();
     }
     else
+    {
       self.domNodeField.value = values;
+      self.domNodeSearch.value = values;
+    }
   }
 
   this.stop = stop;
@@ -525,15 +641,15 @@ WA.Elements.textfieldElement = function(fatherNode, domID, code, listener)
   {
     if (self.group)
       self.group.unregisterField(self);
-    WA.Managers.event.off('keyup', self.domNode, onkeyup, true);
-    WA.Managers.event.off('focus', self.domNode, onfocus, true);
-    WA.Managers.event.off('blur', self.domNode, onblur, true);
+    WA.Managers.event.off('keyup', self.domNodeSearch, onkeyup, true);
+    WA.Managers.event.off('focus', self.domNodeSearch, onfocus, true);
+    WA.Managers.event.off('blur', self.domNodeSearch, onblur, true);
   }
 
   this.destroy = destroy;
   function destroy(fast)
   {
-    WA.Elements.textfieldElement.source.destroy.call(self, fast);
+    WA.Elements.searchabletextfieldElement.source.destroy.call(self, fast);
 
     self.synchronizer = null;
     self.synchronizeelements = [];
@@ -541,6 +657,7 @@ WA.Elements.textfieldElement = function(fatherNode, domID, code, listener)
     self.domNodeError = null;
     self.domNodeHelp = null;
     self.domNodeValue = null;
+    self.domNodeSearch = null;
     self.domNodeCount = null;
     self.domNodeField = null;
     self.domNodeLabel = null;
@@ -557,4 +674,4 @@ WA.Elements.textfieldElement = function(fatherNode, domID, code, listener)
 }
 
 // Add basic element code
-WA.extend(WA.Elements.textfieldElement, WA.Managers.wa4gl._element);
+WA.extend(WA.Elements.searchabletextfieldElement, WA.Managers.wa4gl._element);

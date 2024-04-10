@@ -145,12 +145,37 @@ WA.browser.getScrollHeight = function()
   return WA.browser.getDocumentHeight();
 }
 
+WA.browser.findNodeByClass = function(rootnode, className)
+{
+  // Check if the current node has the desired class
+  if (rootnode.classList && rootnode.classList.contains(className)) {
+    return rootnode;
+  }
+
+  // Iterate over the children of the current node
+  for (let i = 0; i < rootnode.childNodes.length; i++) {
+    const childNode = rootnode.childNodes[i];
+
+    // Recursively call to search the child node tree
+    const foundNode = WA.browser.findNodeByClass(childNode, className);
+
+    // If the node with the desired class is found, return it
+    if (foundNode) {
+      return foundNode;
+    }
+  }
+
+  // If no node with the desired class is found in this subtree, return null
+  return null;
+}
+
+
   // get the left of a DOM element into the document
 WA.browser.getNodeDocumentLeft = function(node)
 {
   var l = node.offsetLeft;
   if (node.offsetParent != null)
-    l += WA.browser.getNodeDocumentLeft(node.offsetParent) + WA.browser.getNodeBorderLeftWidth(node.offsetParent) + WA.browser.getNodeMarginLeftWidth(node.offsetParent);
+    l += WA.browser.getNodeDocumentLeft(node.offsetParent) - WA.browser.getNodeScrollLeft(node.offsetParent);
   return l;
 }
 
@@ -159,7 +184,7 @@ WA.browser.getNodeDocumentTop = function(node)
 {
   var t = node.offsetTop;
   if (node.offsetParent != null)
-    t += WA.browser.getNodeDocumentTop(node.offsetParent) + WA.browser.getNodeBorderTopHeight(node.offsetParent) + WA.browser.getNodeMarginTopHeight(node.offsetParent);
+    t += WA.browser.getNodeDocumentTop(node.offsetParent) - WA.browser.getNodeScrollTop(node.offsetParent);
   return t;
 }
 

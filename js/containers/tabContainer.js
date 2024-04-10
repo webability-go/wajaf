@@ -379,6 +379,9 @@ WA.Containers.tabContainer = function(domNodeFather, domID, code, listener)
 
   function stop()
   {
+    if (self.hasdd)
+      WA.Managers.dd.unregisterGroup(self.domID);
+
     WA.Managers.event.off('click', self.domNodeLeft, self.clickleft, true);
     WA.Managers.event.off('click', self.domNodeRight, self.clickright, true);
     WA.Managers.event.off('click', self.domNodeSelect, self.clickselect, true);

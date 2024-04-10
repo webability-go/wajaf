@@ -29,8 +29,15 @@ WA.Containers.treeContainer = function(fatherNode, domID, code, listener)
   this.data = null;         // all the data rows we can use for this tree
   this.loaded = false;      // the data has been loaded in first instance
   this.countload = 0;       // how many time we try to load: >3 throw error
+  this.params = code.attributes.params?'&'+code.attributes.params:'';
+  this.changeorder = this.code.attributes.changeorder ? this.code.attributes.changeorder != "no" : false;
+
+  this.hasdd = !!WA.Managers.dd;
+  this.domNodeDrag = null;
 
   this.addEvent('start', start);
+  this.addEvent('poststart', poststart);
+  this.addEvent('stop', stop);
 
   /* SYSTEM METHODS */
 
@@ -111,6 +118,18 @@ WA.Containers.treeContainer = function(fatherNode, domID, code, listener)
     fillData();
   }
 
+  function poststart() {
+    if (self.hasdd && self.changeorder) {
+      WA.Managers.dd.registerGroup(self.domID, 'caller', false, self.domID, null);
+    }
+  }
+
+  function stop() {
+    if (self.hasdd && self.changeorder) {
+      WA.Managers.dd.unregisterGroup(self.domID);
+    }
+  }
+
   this.destroy = destroy;
   function destroy(fast)
   {
@@ -141,11 +160,16 @@ WA.Containers.treeContainer = function(fatherNode, domID, code, listener)
     fillData();
   }
 
-  function getData(r)
+  function getDataObject(data)
   {
-    self.data = WA.JSON.decode(r.responseText);
+    self.data = data;
     self.loaded = true;
     fillData();
+  }
+
+  function getData(r)
+  {
+    getDataObject(WA.JSON.decode(r.responseText));
   }
 
   // any record change should call this
@@ -161,10 +185,15 @@ WA.Containers.treeContainer = function(fatherNode, domID, code, listener)
       }
 
       // ask to the server the data
-      var request = WA.Managers.ajax.createRequest(WA.Managers.wa4gl.url + WA.Managers.wa4gl.prelib + self.app.applicationID + WA.Managers.wa4gl.premethod + self.id + WA.Managers.wa4gl.preformat + WA.Managers.wa4gl.format, 'POST', 'Order=get', getData, true);
+      var request = WA.Managers.ajax.createRequest(WA.Managers.wa4gl.url + WA.Managers.wa4gl.prelib + self.app.applicationID + WA.Managers.wa4gl.premethod + self.id + WA.Managers.wa4gl.preformat + WA.Managers.wa4gl.format, 'POST', 'Order=get'+(self.params?'&'+self.params:''), getData, true);
 
       // we put the "loading"
 
+      return;
+    } 
+    else if (!newdataset && !self.loaded)
+    {
+      self.callEvent('get', getDataObject); // ask for children to events (somebody should listen to this)
       return;
     }
     
@@ -198,12 +227,19 @@ WA.Containers.treeContainer = function(fatherNode, domID, code, listener)
           myt.attributes = {};
         myt.attributes.id = dataset[i].id;
         myt.attributes.father = dataset[i].father;
+        myt.attributes.moveable = dataset[i].moveable ? 'yes' : 'no';
         myt.attributes.closeable = dataset[i].closeable?'yes':'no';
         myt.attributes.closed = dataset[i].closed?'yes':'no';
         myt.attributes.loadable = dataset[i].loadable?'yes':'no';
         myt.attributes.loaded = dataset[i].loaded?'yes':'no';
         // create the tree
-        self.app.createTree(self, myt);
+        if (self.state = 5) {
+          self.state = 4; // temporary "starting", to build the whole template before calling start event
+          self.app.createTree(self, myt);
+          self.state = 5;
+        } else {
+          self.app.createTree(self, myt);
+        }
       }
     }
   }
@@ -235,6 +271,123 @@ WA.Containers.treeContainer = function(fatherNode, domID, code, listener)
 
   }
 
+  function moveresponse(request) {
+
+    var data = WA.JSON.decode(request.responseText);
+
+    if (!data || data.message != 'OK')
+      if (data) 
+        alert(data.message);
+      else 
+        alert(request.responseText);
+    else 
+      reload();
+}
+
+  // **************************************************************************
+  // PRIVATE METHODS
+  // **************************************************************************
+  this.moving = moving;
+  function moving(order, zoneid, metrics) {
+
+    if (order == 'start') {
+      // Copy the node to the top
+      node = self.zones[zoneid].domNode;
+      self.domNodeDrag = node.cloneNode(true);
+      self.domNodeDrag.className += ' dragged';
+      // we get absolute coords and set them
+      self.domNodeDrag.style.position = 'absolute';
+      self.domNodeDrag.style.left = metrics.dragdocumentleft + 'px';
+      self.domNodeDrag.style.top = metrics.dragdocumenttop + 'px';
+      self.domNodeDrag.style.width = metrics.mainwidth + 'px';
+      self.domNodeDrag.style.height = metrics.mainheight + 'px';
+      self.domNodeDrag.style.zIndex = 2;
+      // we append to the main document the DOM
+      document.body.appendChild(self.domNodeDrag);
+
+      self.domNodeMessage = WA.createDomNode('div', null, null);
+      self.domNodeMessage.style = "position: absolute; left: 50px; top: 40px; border: 2px solid blue; background-color: white; z-index: 3; padding: 10px; font-size: 2em; color: black;";
+      self.domNodeDrag.appendChild(self.domNodeMessage);
+
+      self.startPos = metrics.maintopstart;
+      self.dropmode = 0;
+      self.dropid = null;
+    }
+    else if (order == 'drag') {
+      // move NODE copied
+      self.domNodeDrag.style.left = metrics.xmouse + 'px';
+      self.domNodeDrag.style.top = metrics.ymouse + 'px';
+      // Search for who is under the pointer, "before", "into", "after"
+
+      var onzone = null;
+      var xpointer = metrics.xmouse;
+      var ypointer = metrics.ymouse;
+      for (var i in self.zones) {
+        var zone = self.zones[i];
+        var top = WA.browser.getNodeDocumentTop(zone.domNode);
+        var bottom = WA.browser.getNodeDocumentTop(zone.domNode) + WA.browser.getNodeHeight(zone.domNode);
+        var left = WA.browser.getNodeDocumentLeft(zone.domNode);
+        var right = WA.browser.getNodeDocumentLeft(zone.domNode) + WA.browser.getNodeWidth(zone.domNode);
+        if (ypointer >= top && ypointer <= bottom && xpointer >= left && xpointer <= right) {
+          onzone = zone;
+          break;
+        }
+      }
+
+      if (onzone) {
+        if (onzone.isMoveable(zoneid)) {
+
+          onzone.hover()
+
+          if (ypointer > top && ypointer < top + (bottom - top) / 3) {
+            // before
+            message = "Mover ANTES de " + zone.domID;
+            self.dropmode = 1;
+          } else if (ypointer > top + (bottom - top) / 3 && ypointer < top + (bottom - top) * 2 / 3) {
+            // into
+            message = "Mover COMO HIJO de " + zone.domID;
+            self.dropmode = 3;
+          } else if (ypointer > top + (bottom - top) * 2 / 3 && ypointer < bottom) {
+            // after
+            message = "Mover DESPUES de " + zone.xdomID[2];
+            self.dropmode = 2;
+          } else {
+            self.dropmode = 0;
+          }
+          self.dropid = zone.xdomID[2];
+          self.domNodeMessage.innerHTML = message;
+        } else {
+          self.domNodeMessage.innerHTML = "No se puede mover aqui";
+          self.dropmode = 0;
+        } 
+
+      }
+      if (self.lastonzone && self.lastonzone != onzone) {
+        self.lastonzone.hout()
+      }
+      self.lastonzone = onzone;
+
+    }
+    else if (order == 'drop') {
+      // destroy the hover node
+      document.body.removeChild(self.domNodeDrag);
+      if (self.lastonzone) {
+        self.lastonzone.hout()
+      }
+      // send the order to the server
+      if (self.dropmode > 0) {
+        self.lastonzone.sendServer('move', { id: zoneid, toid: self.dropid, mode: self.dropmode }, moveresponse ); 
+      }
+
+      self.startpos = 0;
+      self.domNodeMessage = null;
+      self.domNodeDrag = null;
+      self.dropmode = 0;
+      self.dropid = null;
+      self.lastonzone = null;
+    }
+  }
+
   this.parseTemplates(code);
   this.parseData(code);
 }
@@ -251,6 +404,7 @@ WA.Containers.treeContainer.treeZone = function(father, domID, container, code, 
 
   this.children = {};
 
+  this.moveable = (code.attributes.moveable==='yes');
   this.closeable = (code.attributes.closeable==='yes');
   this.closed = (code.attributes.closed==='yes');
   this.loadable = (code.attributes.loadable==='yes');
@@ -292,21 +446,46 @@ WA.Containers.treeContainer.treeZone = function(father, domID, container, code, 
   this.domNodeMain.appendChild(this.domNodeChildren);
 
   this.addEvent('start', start);
+  this.addEvent('poststart', poststart);
   this.addEvent('stop', stop);
+
+  this.isMoveable = isMoveable;
+  function isMoveable(zoneid)
+  {
+    if (!self.moveable)
+      return false;
+    if (zoneid == self.xdomID[2])
+      return false;
+    // Search if this one is child of moved one
+
+
+    return true
+  }
+
+  this.childrenLoadedObject = childrenLoadedObject;
+  function childrenLoadedObject(data)
+  {
+    self.loaded = true;
+    self.father.fillData(data);
+  }
 
   this.childrenLoaded = childrenLoaded;
   function childrenLoaded(r)
   {
     var data = WA.JSON.decode(r.responseText);
-    self.loaded = true;
-    self.father.fillData(data.row);
+    childrenLoadedObject(data.row);
   }
 
   this.loadChildren = loadChildren;
   function loadChildren()
   {
+    if (!self.father.serverlistener)
+    {
+      self.father.callEvent('getchildren', {id: self.code.attributes.id, listener: childrenLoadedObject}); // ask for children to events (somebody should listen to this)
+      return;
+    }
     // start an ajax request
-    var request = WA.Managers.ajax.createRequest(WA.Managers.wa4gl.url + WA.Managers.wa4gl.prelib + self.father.app.applicationID + WA.Managers.wa4gl.premethod + self.father.id + WA.Managers.wa4gl.preformat + WA.Managers.wa4gl.format, 'POST', null, childrenLoaded, false);
+    var request = WA.Managers.ajax.createRequest(WA.Managers.wa4gl.url + WA.Managers.wa4gl.prelib + self.father.app.applicationID + WA.Managers.wa4gl.premethod + self.father.id + WA.Managers.wa4gl.preformat + WA.Managers.wa4gl.format, 'POST', (self.params?self.params:''), childrenLoaded, false);
     request.addParameter('Order', 'getchildren');
     request.addParameter('father', self.code.attributes.id);
     request.send();
@@ -318,12 +497,13 @@ WA.Containers.treeContainer.treeZone = function(father, domID, container, code, 
   }
 
   this.sendServer = sendServer;
-  function sendServer(order, code)
+  function sendServer(order, code, response)
   {
     if (!self.father.serverlistener)
       return;
     // send information to server based on mode
-    var request = WA.Managers.ajax.createRequest(WA.Managers.wa4gl.url + WA.Managers.wa4gl.prelib + self.father.app.applicationID + WA.Managers.wa4gl.premethod + self.father.id + WA.Managers.wa4gl.preformat + WA.Managers.wa4gl.format, 'POST', 'Order='+order, getResponse, false);
+    if (!response) response = getResponse;
+    var request = WA.Managers.ajax.createRequest(WA.Managers.wa4gl.url + WA.Managers.wa4gl.prelib + self.father.app.applicationID + WA.Managers.wa4gl.premethod + self.father.id + WA.Managers.wa4gl.preformat + WA.Managers.wa4gl.format, 'POST', 'Order='+order+(self.params?'&'+self.params:''), response, false);
     if (request)
     {
       for (var i in code)
@@ -364,6 +544,43 @@ WA.Containers.treeContainer.treeZone = function(father, domID, container, code, 
     return result;
   }
 
+  this.moving = moving;
+  function moving(order, id1, id2, zone, metrics) {
+
+    self.moving = true;
+    self.father.moving(order, self.xdomID[2], metrics);
+  }
+
+  this.hover = hover;
+  function hover() {
+    if (!self.domNodeHover) {
+      self.domNodeHover = WA.createDomNode('div', this.domID + "_hover", null);
+      self.domNodeHover.style = "position: absolute; left: 0px; top: 0px; width: 100%; height: 100%; background-color: white; opacity: 0.4; z-index: 2;";
+      // we append to the main document the DOM
+      self.domNode.appendChild(self.domNodeHover);
+      var n1 = WA.createDomNode('div', this.domID + "_l1", null);
+      n1.style = "position: absolute; left: 0px; top: 0px; width: 80%; height: 33%; background-color: green; border-top: 1px solid black; z-index: 3;";
+      self.domNodeHover.appendChild(n1);
+      n1 = WA.createDomNode('div', this.domID + "_l2", null);
+      n1.style = "position: absolute; left: 0px; top: 33%; width: 80%; height: 33%; background-color: red; border-top: 1px solid black; z-index: 3;";
+      self.domNodeHover.appendChild(n1);
+      n1 = WA.createDomNode('div', this.domID + "_l3", null);
+      n1.style = "position: absolute; left: 0px; top: 66%; width: 80%; height: 34%; background-color: green; border-top: 1px solid black; z-index: 3;";
+      self.domNodeHover.appendChild(n1);
+      n1 = WA.createDomNode('div', this.domID + "_l4", null);
+      n1.style = "position: absolute; left: 0px; bottom: 0px; width: 80%; height: 1px; background-color: black; z-index: 3;";
+      self.domNodeHover.appendChild(n1);
+
+    }
+  }
+
+  this.hout = hout;
+  function hout() {
+    if (self.domNodeHover)
+      self.domNode.removeChild(self.domNodeHover);
+    self.domNodeHover = null;
+  }
+
   function start()
   {
     // link open close
@@ -377,10 +594,24 @@ WA.Containers.treeContainer.treeZone = function(father, domID, container, code, 
     }
   }
 
+  function poststart() {
+    if (self.father.hasdd && self.father.changeorder && self.moveable) {
+      // Search if there is a node with the class 'move' into the tree of this node
+      var movenode = WA.browser.findNodeByClass(self.domNode, 'move');
+      if (!movenode)
+        movenode = self.domNode;
+      WA.Managers.dd.registerObject(self.father.domID, movenode, self.domNode, moving, null);
+    }
+  }
+
   function stop()
   {
     if (self.closeable)
       WA.Managers.event.off('click', self.domNodeOpenClose, self.openclose, true);
+    if (self.father.hasdd && self.father.changeorder && self.moveable) {
+      WA.Managers.dd.unregisterObject(self.father.domID, self.domNode);
+    }
+    console.log("stop node");
   }
 
   this.resize = resize;

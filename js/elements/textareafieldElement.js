@@ -230,14 +230,14 @@ WA.Elements.textareafieldElement = function(fatherNode, domID, code, listener)
       self.status = 2;
       self.errors.statustoolong = true;
     }
+    var text = value;
+    text = text.replace(/^[ ]+/, "");
+    text = text.replace(/[ ]+$/, "");
+    text = text.replace(/[ ]+/g, " ");
+    text = text.replace(/[\n]+/g, " ");
+    var numpalabras = (text.length > 0 ? text.split(" ").length : 0);
     if (self.maxwords || self.minwords)
     {
-      var text = value;
-      text = text.replace(/^[ ]+/, "");
-      text = text.replace(/[ ]+$/, "");
-      text = text.replace(/[ ]+/g, " ");
-      text = text.replace(/[\n]+/g, " ");
-      var numpalabras = (text.length>0?text.split(" ").length:0);
       if (numpalabras < self.minwords)
       {
         self.status = 2;
@@ -248,8 +248,8 @@ WA.Elements.textareafieldElement = function(fatherNode, domID, code, listener)
         self.status = 2;
         self.errors.statustoomanywords = true;
       }
-      self.domNodeCount.innerHTML = numpalabras + '/' + value.length;
     }
+    self.domNodeCount.innerHTML = numpalabras + '/' + value.length;
     // user own checks
     if (self.code[0] != undefined && self.code[0].tag != undefined && self.code[0].tag == 'check')
       eval(self.code[0].data);

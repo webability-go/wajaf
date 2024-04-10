@@ -108,6 +108,9 @@
 
 .group>fieldset>.hidden { display: none; }
 
+.group>.group>fieldset {
+    margin-left: 50px; border-left: 1px solid black;
+}
 
 /* grid CONTAINER CLASSES */
 
@@ -116,10 +119,13 @@
 /* 3 types of zones: title, field, control */
 .grid .grid-header { position: absolute; left: 0px; right: 0px; top: 0px; height: 20px; background-color: #eee; border-bottom: 1px solid #ccc; overflow: hidden; }
 .grid .grid-header-content { position: relative; }
-.grid .grid-header-column { float: left; }
+.grid .grid-header-column { float: left; position: relative; }
+.grid .grid-header-column.hover { color: #336; }
 .grid .grid-header-column-title { background-color: white; height: 16px; padding-top: 3px; padding-left: 5px; border-bottom: 1px solid #999; border-right: 1px solid #999; }
 .grid .grid-header-column-sizer { float: right; background-color: green; width: 3px; height: 20px; cursor: col-resize; }
-
+.grid .grid-header-column-order { float: right; width: 15px; height: 16px; background-image: url('../../skins/4gl/order-asc.png'); background-repeat: no-repeat; }
+.grid .grid-header-column-order-asc { width: 15px; height: 16px; background-image: url('../../skins/4gl/order-asc.png'); background-repeat: no-repeat; background-position: center; position: absolute; right: 1px; top: 1px; background-color: #fff; border-radius: 50%; }
+.grid .grid-header-column-order-desc { width: 15px; height: 16px; background-image: url('../../skins/4gl/order-desc.png'); background-repeat: no-repeat; background-position: center; position: absolute; right: 1px; top: 1px; background-color: #fff; border-radius: 50%; }
 
 .grid .grid-body { position: absolute; left: 0px; right: 0px; top: 21px; bottom: 21px; background-color: #eee; overflow: auto; }
 .grid .grid-body-content { position: relative; }
@@ -218,10 +224,34 @@ margin-left: 0px; }
 .textfield.ok>.field { border-left: 1px solid #44aa44; border-bottom: 1px solid #44aa44; background-color: #eef8cc; }
 .textfield.error>.field { border-left: 1px solid #cc8800; border-bottom: 1px solid #cc8800; background-color: #ffeeee; }
 .textfield.edition>.field { border-left: 1px solid #8888ff; border-bottom: 1px solid #8888ff; background-color: #eeeeff; }
-
+.textfield>.selected {
+    border: 0px;
+    padding: 2px;
+    height: 15px;
+    border-left: 1px solid #aaa;
+    border-bottom: 1px solid #aaa;
+    background-color: #eee;
+    color: #888;
+}
 .textfield>.help { display: block; padding: 5px; color: #999; float: right; width: 400px; }
 .textfield>.error { display: block; padding: 5px; color: #f00; float: right; width: 400px; }
-
+.textfield>.list {
+    position: absolute;
+    top: 20px;
+    background-color: #cceeff;
+    border: 2px solid blue;
+    height: 100px;
+    display: none;
+    z-index: 10;
+    overflow-y: scroll;
+}
+.textfield>.list>.item {
+    cursor: pointer;
+}
+.textfield>.list>.item:hover,  .textfield>.list>.item.selected {
+    background-color: blue;
+    color: white;
+}
 .textfieldlabel.medium { }
 
 .textfieldlabel.tiny { width: auto; float: none; text-align: left; padding-left: 20px; }
@@ -273,6 +303,9 @@ margin-left: 0px; }
 .lovfield>.count { color: #999; font-size: 10px; padding-top: 3px; }
 .lovfield>.value {  }
 .lovfield>.field { width: 270px; border: 0px; height: 20px; border-left: 1px solid #aaa; border-bottom: 1px solid #aaa; background-color: #eee; }
+.lovfield>div.field {
+    height: auto;
+}
 .lovfield.ok>.field { border-left: 1px solid #44aa44; border-bottom: 1px solid #44aa44; background-color: #eef8cc; }
 .lovfield.error>.field { border-left: 1px solid #cc8800; border-bottom: 1px solid #cc8800; background-color: #ffeeee; }
 .lovfield.edition>.field { border-left: 1px solid #8888ff; border-bottom: 1px solid #8888ff; background-color: #eeeeff; }
@@ -364,9 +397,46 @@ margin-left: 0px; }
 .dommaskcolorfield.maskdisabled .entryinput { border: 0px; background-color: #eeeeee; padding: 2px; height: 15px; }
 
 
+/* MMC field */
 
+.mmcfieldlabel { float: left; width: 140px; padding-top: 1px; text-align: right; display: block; color: #333; font-size: 12px; font-weight: bold; line-height: 18px;
+    width: auto; float: none; text-align: left; padding-left: 20px; }
+.mmcfieldlabel.error { color: red; }
 
+.mmcfield { padding-left: 20px; background-repeat: no-repeat; background-position: 2px 4px; position: relative; min-height: 50px; }
+.mmcfield.ok { background-image: url('../../skins/4gl/field-ok.png'); }
+.mmcfield.error { background-image: url('../../skins/4gl/field-error.png'); }
+.mmcfield.edition { background-image: url('../../skins/4gl/field-edition.png'); }
 
+.mmcfield .upload { border-left: 2px dashed #aaa; border-bottom: 2px dashed #aaa; background-color: #eee; margin: 1px; font-size: 10px; font-weight: bold; min-height: 50px; padding-top: 5px; cursor: pointer; }
+.mmcfield .upload-icon { background-image: url('../../skins/4gl/filefield-upload.png'); background-size: cover; background-position: center; background-repeat: no-repeat; width: 25px; height: 25px;}
+.mmcfield.ok .upload { border-left: 2px dashed #44aa44; border-bottom: 2px dashed #44aa44; background-color: #eef8cc; color: #0a0; }
+.mmcfield.error .upload { border-left: 2px dashed #cc8800; border-bottom: 2px dashed #cc8800; background-color: #ffeeee; color: #a00; }
+.mmcfield.edition .upload { border-left: 2px dashed #8888ff; border-bottom: 2px dashed #8888ff; background-color: #eeeeff; color: #00a; }
+.mmcfield.ok .upload.dragover { border-left: 2px solid #44aa44; border-bottom: 2px solid #44aa44; background-color: #eef8cc; color: #0a0; }
+.mmcfield.error .upload.dragover { border-left: 2px solid #cc8800; border-bottom: 2px solid #cc8800; background-color: #ffeeee; color: #a00; }
+.mmcfield.edition .upload.dragover { border-left: 2px solid #8888ff; border-bottom: 2px solid #8888ff; background-color: #eeeeff; color: #00a; }
+
+.mmcfield .uploading { position: relative; border-left: 2px solid #8888ff; border-bottom: 2px solid #8888ff; background-color: #eeeeff; margin: 1px; font-size: 12px; font-weight: bold; min-height: 50px; }
+.mmcfield .uploading-icon { background-image: url('../../skins/4gl/loader.gif'); background-size: cover; background-position: center; background-repeat: no-repeat; width: 25px; height: 25px; margin-left: 10px; margin-top: 10px; float: left;}
+.mmcfield .uploading-name { position: absolute; top: 10px; left: 60px; }
+.mmcfield .uploading-perc { position: absolute; top: 10px; right: 5px; }
+.mmcfield .uploading-bar { position: absolute; bottom: 10px; right: 5px; height: 10px; width: calc(100% - 55px); background-color: white;}
+.mmcfield .uploading-progressbar { position: absolute; left: 0; width: 0; height: 10px; background-color: #77a;}
+
+.mmcfield .uploaded { position: relative; margin: 3px; font-size: 10px; font-weight: bold; min-height: 50px; }
+.mmcfield.editing .uploaded { background-color: #eef;}
+.mmcfield .uploaded-icon { max-height: 50px; max-width: 50px; float: left; }
+.mmcfield .uploaded-image { max-height: 50px; max-width: 100px; float: left; margin-right: 5px; }
+.mmcfield .uploaded-value { margin-left: 5px; }
+.mmcfield .uploaded-delete { width: auto; border: 1px solid red; padding: 5px; position: absolute; bottom: 0; right: 0; cursor: pointer; }
+.mmcfield .uploaded-delete:hover { background-color: red; color: white; }
+
+.mmcfield>.help { display: block;padding: 5px; color: #999; float: right; width: 400px; }
+.mmcfield>.error { display: block; padding: 5px; color: #f00; float: right; width: 400px; }
+
+.mmcfieldlabel.tiny { width: auto; float: none; text-align: left; padding-left: 20px; }
+.mmcfield.tiny { margin-left: 0px; }
 
 
 

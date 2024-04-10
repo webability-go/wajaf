@@ -32,6 +32,9 @@ WA.Containers.gridContainer = function(fatherNode, domID, code, listener)
         classnameheadercolumn:'grid-header-column',
         classnameheadercolumntitle:'grid-header-column-title',
         classnameheadercolumnsizer:'grid-header-column-sizer',
+        classnameordercolumn:'grid-header-column-order',
+        classnameordercolumnasc:'grid-header-column-order-asc',
+        classnameordercolumndesc:'grid-header-column-order-desc',
       classnamebody:'grid-body', classnamebodycontent:'grid-body-content',
         classnamebodycolumn: 'grid-body-column',
         classnamebodycell:'grid-body-cell',
@@ -41,17 +44,21 @@ WA.Containers.gridContainer = function(fatherNode, domID, code, listener)
   this.haslistener = (code.attributes.haslistener==='yes');
   this.minload = code.attributes.minload?parseInt(code.attributes.minload, 10):50;
   this.params = code.attributes.params?'&'+code.attributes.params:'';
-
+  this.hasdd = !!WA.Managers.dd;
+  this.domNodeDrag = null;
+  this.domNodeDrag1 = null;
+  this.domNodesDrag = [];
+  
   this.columns = {};        // all the columns (zones)
   this.lines = [];          // all the lines of data
 
   this.data = null;         // all the loaded data
   this.total = -1;
   this.fullloaded = false;
-
+  
   this.populatemin = 0;
   this.populatemax = this.minload-1;
-
+  
   this.loading = false;
   this.toptoload = 0;
   this.lineheight = 0;
@@ -80,11 +87,11 @@ WA.Containers.gridContainer = function(fatherNode, domID, code, listener)
   this.domNode.appendChild(this.domNodeFooter);
   this.domNodeFooterContent = WA.createDomNode('div', domID+'_footercontent', this.classes.classnamefootercontent);
   this.domNodeFooter.appendChild(this.domNodeFooterContent);
-
+    
   this.footer = new WA.Containers.gridContainer.gridFooter(this, domID+'_footer', this.domNodeFooterContent);
 
 
-/*
+  /*
   this.selectable = (code.attributes.selectable==='yes');
   this.changes = (code.attributes.changes==='deferred');  // true = deferred on user click, false: online changes (if haslistener obviously)
   this.isselectable = this.selectable;   // global selectable indicator (row or any field selectable)
@@ -102,7 +109,7 @@ WA.Containers.gridContainer = function(fatherNode, domID, code, listener)
       classnamecelltitle:'grid-celltitle', classnamecelltitleempty:'grid-celltitleempty',
       classnamecelltitleasc:'grid-celltitleasc', classnamecelltitledesc:'grid-celltitledesc', classnamecelltitlefiltered:'grid-celltitlefiltered',
       classnameline:'grid-line',classnamelineselected:'grid-lineselected',classnamelinenew:'grid-linenew',
-classnamecellmodified:'grid-cellmodified',
+      classnamecellmodified:'grid-cellmodified',
       classnameviewicon:'grid-viewicon', classnameselecticon:'gridselecticon', classnameediticon:'grid-editicon',
       classnameselectclear:'grid-selectclear', classnameselectall:'gridselectall', classnameselectinverse:'grid-selectinverse',
       classnameeditnew:'grid-editnew', classnameeditsave:'grid-editsave', classnameeditdelete:'grid-editdelete'
@@ -114,22 +121,40 @@ classnamecellmodified:'grid-cellmodified',
 
   this.locali = false;
   this.localid = null;
-*/
+  */
 
   this.addEvent('start', start);
   this.addEvent('stop', stop);
   this.addEvent('resize', resize);
-
+  
   WA.Managers.event.on('mouseover', self.domNode, findcell, true);
   WA.Managers.event.on('click', self.domNode, click, true);
   WA.Managers.event.on('scroll', self.domNodeBody, scrollBody, true);
+
+  var fieldorder = '';
+  var direction = '';
+
+/*
+  function doDrag(e) {
+    nodoTarget.style.width = (startWidth + e.clientX - startX) + 'px';
+    nodoDetalle.style.width = (startWidth + e.clientX - startX) + 'px';
+    //endWidth = parseInt(document.defaultView.getComputedStyle(nodoTarget, "").width, 10);
+    //nodoPadre.style.height = (startHeight + e.clientY - startY) + 'px';
+  }
+ 
+  function stopDrag(e) {
+    document.documentElement.removeEventListener('mousemove', doDrag, false);
+    document.documentElement.removeEventListener('mouseup', stopDrag, false);
+  }
+*/
 
   function sendServer(order, code, feedback)
   {
     if (!self.haslistener)
       return;
+
     // send information to server based on mode
-    var request = WA.Managers.ajax.createRequest(WA.Managers.wa4gl.url + WA.Managers.wa4gl.prelib + self.app.applicationID + WA.Managers.wa4gl.premethod + self.id + WA.Managers.wa4gl.preformat + WA.Managers.wa4gl.format, 'POST', 'Order='+order+(self.params?'&'+self.params:''), feedback, false);
+    var request = WA.Managers.ajax.createRequest(WA.Managers.wa4gl.url + WA.Managers.wa4gl.prelib + self.app.applicationID + WA.Managers.wa4gl.premethod + self.id + WA.Managers.wa4gl.preformat + WA.Managers.wa4gl.format, 'POST', 'Order='+order+(self.params?'&'+self.params:'')+(direction!=''?'&sort='+direction+'&field='+fieldorder:''), feedback, false);
 
     if (request)
     {
@@ -154,12 +179,14 @@ classnamecellmodified:'grid-cellmodified',
     if (!code.attributes.id)
       throw 'Error: the id is missing in the tree construction of '+domID;
 
-    if (!self.firstfield)
+    if (!self.firstfield)stop
       self.firstfield = code.attributes.field;
-
+ 
     // we create the column itself
     var c = new WA.Containers.gridContainer.gridColumn(self, domID+'_column', self.domNodeHeaderContent, code, notify);
     self.columns[code.attributes.field] = c;
+    c.start();
+
     var z = new WA.Containers.gridContainer.gridZone(self, domID, self.domNodeBodyContent, code, notify);
     self.zones[code.attributes.field] = z;
 
@@ -190,7 +217,7 @@ classnamecellmodified:'grid-cellmodified',
 
     self.app.destroyTree(ldomID[2]);
     delete self.zones[ldomID[2]];
-
+    
     self.columns[ldomID[2]].destroy();
     delete self.columns[ldomID[2]];
 
@@ -223,15 +250,23 @@ classnamecellmodified:'grid-cellmodified',
   {
 
   }
-
+  
   function scrollBody(event)
   {
     if (!self.lineheight)
+    {
+      // this should not happen: when we get the focus for the 1rst time, the height is fixed if it was not
       return;
+    }
     var pos = self.domNodeBody.scrollTop;
     var line = Math.floor(pos / self.lineheight);
     self.populatemin = line;
     self.populatemax = line + self.minload - 1;
+
+    // Header scroll
+    var nHead = WA.toDOM(self.domNode.id + '_header');
+    nHead.scrollLeft = self.domNodeBody.scrollLeft;
+
     fillData();
   }
 
@@ -239,14 +274,14 @@ classnamecellmodified:'grid-cellmodified',
   {
     self.loading = false;
     removeLoading();
-
+    
     self.countload = 0;
     var code = WA.JSON.decode(r.responseText);
 
-    if ((code.row.length || Object.keys(code.row).length) && !self.data)
+    self.total = code.total;
+    if (code.row.length && !self.data)
     {
       self.data = code.row;
-      self.total = code.total;
     }
     else
     {
@@ -259,14 +294,15 @@ classnamecellmodified:'grid-cellmodified',
     }
     if (self.total > 0)
       fillData();
+    else
+      self.footer.populate();
   }
 
   function fillData()
   {
-    // 2 levels: lines and data.
+    // 2 levels: lines and data. 
     // If lines are not defined, try to define them and fill
     // if data is not set, try to load it (delayed)
-
     var mintoload = -1;
     var maxtoload = -1;
     var settoload = [];
@@ -274,19 +310,19 @@ classnamecellmodified:'grid-cellmodified',
     for (var i = self.populatemin; i <= self.populatemax; i++)
     {
       // we are at the end of the total lines, nothing more to do
-      if (self.total != -1 && i >= self.total)
+      if (self.total > 0 && i >= self.total)
         break;
       // If the line has already been populated, nothing to do
       if (self.lines[i])
         continue;
-
+      
       // If the data exists, just populate it
       if (self.data && self.data[i])
       {
         createLine(self.data[i], i);
         continue;
       }
-
+      
       // creates the array to load
       if (mintoload == -1) mintoload = maxtoload = i;
       else if (maxtoload == i-1) maxtoload++;
@@ -302,7 +338,7 @@ classnamecellmodified:'grid-cellmodified',
       putLoading();
       // put "Loading...."
     }
-
+    
     if (mintoload != -1 && !self.loading && self.serverlistener)
     {
       if (self.countload++ > 3)
@@ -318,7 +354,7 @@ classnamecellmodified:'grid-cellmodified',
     adjustHeight();
     self.footer.populate();
   }
-
+  
   function createLine(data, index)
   {
     // desplazar esto
@@ -326,18 +362,17 @@ classnamecellmodified:'grid-cellmodified',
     self.domNodeBodyContent.style.width = size + 'px';
 
     // first cell of first line will set lineheight (very important !)
-    var line = new WA.Containers.gridContainer.gridLine(self, self.domID+'_l-'+index, data, index);
+    var line = new WA.Containers.gridContainer.gridLine(self, self.domID+'_line_'+index, data, index);
     line.start();
     self.lines[index] = line;
-
     return line;
   }
-
+  
   function adjustHeight()
   {
     if (!self.lineheight)
       return;
-
+    
     // adjust the height of the container
     // based on data.total
     // get the height of a row
@@ -354,30 +389,30 @@ classnamecellmodified:'grid-cellmodified',
       self.lines[i].destroy();
     for (var i in self.zones)
       WA.browser.setInnerHTML(self.zones[i].domNode, '');
-//    WA.browser.setInnerHTML(self.domNodeBodyContent, '');
+      //WA.browser.setInnerHTML(self.domNodeBodyContent, '');
     self.linecount = 0;
     self.lines = [];
   }
 
   function putLoading()
   {
-
+    
   }
-
+  
   function removeLoading()
   {
-
+    
   }
-
-
+  
+  
   function findcell(event)
   {
     // gets the target and hover the things
-
+    
     var node = event.target;
     var column = node.column;
     var line = node.line;
-
+    
     // change class
     if (currentcolumn)
     {
@@ -405,19 +440,14 @@ classnamecellmodified:'grid-cellmodified',
       currentline = line;
     }
   }
-
+  
   function click(event)
   {
-    var node = event.target;
-    var column = node.column;
-    var line = node.line;
-
-    // send data line
-    self.propagate('click', {column:column,line:line,data:self.data[line]});
+    return;
   }
-
-
-
+  
+  
+  
   // ========================================================================================
   // system functions, called ONLY BY 4GL
   // constructor is called when creating the object.
@@ -429,9 +459,15 @@ classnamecellmodified:'grid-cellmodified',
   this.start = start;
   function start()
   {
+    if (self.hasdd)
+    {
+      console.log("REGISTRANDO GROUPO", self.domID, self.domNodeBody);
+      WA.Managers.dd.registerGroup(self.domID, 'caller', false, self.domID, null);
+    }
+
     self.countload = 0;
-    fillData();
     self.footer.start();
+    fillData();
   }
 
   this.reload = reload;
@@ -449,6 +485,22 @@ classnamecellmodified:'grid-cellmodified',
   {
     if (!WA.Containers.gridContainer.source.resize.call(self))
       return;
+    
+    if (!self.lineheight && self.lines[0])
+    {
+      self.lineheight = WA.browser.getNodeOuterHeight(self.lines[0].cells[self.firstfield]);
+      // reposition all column heights
+      adjustHeight();
+      // adjust all tops of all existing cells
+      for (var i = 0, l = self.lines.length; i < l; i++)
+      {
+        if (self.lines)
+        {
+          for (var j in self.lines[i].cells)
+            self.lines[i].cells[j].style.top = (i * self.lineheight) + 'px';
+        }
+      }
+    }
 
     // calculate width and height of nodes
     var size = 0;
@@ -465,13 +517,15 @@ classnamecellmodified:'grid-cellmodified',
     {
       height = self.total * WA.browser.getNodeHeight(self.lines[0].cells[self.firstfield]);
     }
-
     self.domNodeBodyContent.style.height = height + 'px';
   }
 
   this.stop = stop;
   function stop()
   {
+    if (self.hasdd)
+      WA.Managers.dd.unregisterGroup(self.domID);
+
     if (self.running != 1 && self.running != 2)
       return;
     self.running = 4;
@@ -510,13 +564,200 @@ classnamecellmodified:'grid-cellmodified',
     self = null;
   }
 
+  function setLineNodeDrag(lineid, m)
+  {
+    var nodes = document.querySelectorAll("[id^='" + lineid + "']");
+    var l = m.dragdocumentleft;
 
+    for(var i=0; i < nodes.length; i++)
+    {
+      var w = parseInt(/\d+/g.exec(nodes[i].parentElement.style.width)[0]);
+      self.domNodeDrag1 = nodes[i].cloneNode(true);
+      self.domNodeDrag1.className += ' dragged';
+      // we get absolute coords and set them
+      self.domNodeDrag1.style.position = 'absolute';
+      self.domNodeDrag1.style.left = l +'px';
+      self.domNodeDrag1.style.top = m.dragdocumenttop + 'px';;
+      self.domNodeDrag1.style.width = w + 'px';
+      self.domNodeDrag1.style.height = m.mainheight + 'px';
+      self.domNodeDrag1.style.zIndex = 2;
+
+      l += w;
+      // we append to the main document the DOM
+      document.body.appendChild(self.domNodeDrag1);
+
+      //Save reference in array
+      self.domNodesDrag.push(self.domNodeDrag1);
+    }
+  }
+
+  function lineNodeDrag(m)
+  {
+    for(var i=0; i<self.domNodesDrag.length; i++)
+    {
+      //self.domNodesDrag[i].style.left = m.xmouse + 'px';
+      self.domNodesDrag[i].style.top = m.ymouse + 'px';
+    }
+  }
+
+  function destroyDomNodeDrag()
+  {
+    for(var i=0; i<self.domNodesDrag.length; i++)
+    {
+      document.body.removeChild(self.domNodesDrag[i]);
+    }
+    self.domNodesDrag = [];
+  }
+
+  this.moving = moving;
+  function moving(order, lineid, metrics) {
+
+    // Get the field name
+    var parts = lineid.split('_');
+    field = parts[parts.length - 1];
+    key = parts[parts.length - 3];
+    nodesMove = [];
+
+    switch (order) {
+      case 'start':
+        // GET Node
+        var node = WA.toDOM(lineid);
+
+        // Pega la nodos línea 
+        setLineNodeDrag(lineid.substring(0,lineid.indexOf('_cell_') + 6), metrics);
+
+        self.domNodeDrag = node.cloneNode(true);
+        self.domNodeDrag.className += ' dragged';
+        // we get absolute coords and set them
+        self.domNodeDrag.style.position = 'absolute';
+        self.domNodeDrag.style.left = metrics.dragdocumentleft + 'px';
+        self.domNodeDrag.style.top = metrics.dragdocumenttop + 'px';
+        self.domNodeDrag.style.width = metrics.mainwidth + 'px';
+        self.domNodeDrag.style.height = metrics.mainheight + 'px';
+        self.domNodeDrag.style.zIndex = 2;
+        // we append to the main document the DOM
+        document.body.appendChild(self.domNodeDrag);
+
+        self.domNodeMessage = WA.createDomNode('div', null, null);
+        self.domNodeMessage.style = "position: absolute; left: 50px; top: 50px; border: 2px solid blue; background-color: white; z-index: 3; padding: 5px; font-size: 12px; color: black;";
+        self.domNodeDrag.appendChild(self.domNodeMessage);
+        break;
+      case 'drag':
+        // move NODE copied
+        //self.domNodeDrag.style.left = metrics.xmouse + 'px';
+        self.domNodeDrag.style.top = metrics.ymouse + 'px';
+
+        lineNodeDrag(metrics);
+
+        // Search for who us under the pointer, "before", "into", "after"
+        var onzone = null;
+        var xpointer = metrics.xmouse;
+        var ypointer = metrics.ymouse;
+
+        var zone = self.zones['orden'].domNode.childNodes;
+        var top = 0;
+        var bottom = 0;
+        var message = '';
+
+        for(var i=0, l=zone.length; l>i;i++)
+        {
+          top = WA.browser.getNodeDocumentTop(zone[i]);
+          bottom = WA.browser.getNodeDocumentTop(zone[i]) + WA.browser.getNodeHeight(zone[i]);
+          var left = WA.browser.getNodeDocumentLeft(zone[i]);
+          var right = WA.browser.getNodeDocumentLeft(zone[i]) + WA.browser.getNodeWidth(zone[i]);
+
+          if((ypointer >= top && ypointer <= bottom && xpointer >= left && xpointer <= right))
+          {
+            onzone = zone[i];
+            break;
+          }
+        };
+
+        if (onzone) {
+
+          self.dropmode = 0;
+          if(onzone.id === lineid)
+          {
+            //message = "No se puede mover aquí " + self.domNodeDrag.id;
+            return;
+          }
+
+          onzone.style.backgroundColor = 'red';
+          if (ypointer > top && ypointer < top + (bottom - top) / 1.3) {
+            // before
+            message = "Mover ANTES de " + onzone.id;
+            self.dropmode = 1;
+          } 
+
+          if (ypointer > top + (bottom - top) * 2 / 3 && ypointer < bottom) {
+            // after
+            message = "Mover DESPUES de " + onzone.id;
+            self.dropmode = 3;
+          }
+          self.dropid = onzone.id;
+          self.domNodeMessage.innerHTML = message;
+        }
+        if (self.lastonzone && self.lastonzone != onzone) {
+          self.lastonzone.style.backgroundColor = '';
+        }
+        self.lastonzone = onzone;
+        break;
+      case 'drop':
+        // destroy the hover node
+        document.body.removeChild(self.domNodeDrag);
+        destroyDomNodeDrag();
+
+        if (self.lastonzone) {
+          self.lastonzone.style.backgroundColor = '';
+        }
+        // send the order to the server
+        if (self.dropmode > 0) {
+          sendServer('move', { id: lineid, toid: self.dropid, mode: self.dropmode }, moveresponse);
+        }
+        // reload anything 
+        self.domNodeMessage = null;
+        self.domNodeDrag = null;
+        self.dropmode = 0;
+        self.dropid = null;
+        self.lastonzone = null;
+        break;
+    }
+  }
+
+  function moveresponse(request) {
+    self.loading = false;
+    removeLoading();
+    
+    self.countload = 0;
+    var code = WA.JSON.decode(request.responseText);
+
+    self.total = code.total;
+    if (code.row.length && !self.data)
+    {
+      self.data = code.row;
+    }
+    else
+    {
+      if (!self.data)
+        self.data = [];
+      for (var i in code.row)
+      {
+        self.data[parseInt(i, 10)] = code.row[i];
+      }
+    }
+    if (self.total > 0)
+      fillData();
+    else
+      self.footer.populate();
+  }
+
+/*
+ 
   // ================================================================
   // move divisions by program and mouse
   this.startdrag = startdrag;
   function startdrag(sizerID, size, event, group, object, zone, data)
   {
-
     self.movingsize = size;
     self.movingID = sizerID;
     //
@@ -539,6 +780,7 @@ classnamecellmodified:'grid-cellmodified',
     self.movingsize = null;
     self.movingID = null;
   }
+*/
 
   this.resizecolumns = resizecolumns;
   function resizecolumns()
@@ -556,19 +798,18 @@ classnamecellmodified:'grid-cellmodified',
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   function scroll(e)
   {
     var left = WA.browser.getNodeScrollLeft(self.domNodeBody);
@@ -690,12 +931,11 @@ classnamecellmodified:'grid-cellmodified',
   function quickSort(lo0, hi0, comp, field)
   {
     // local ONLY available if full data loaded !
-
     var lo = lo0;
     var hi = hi0;
     var value;
 
-    if ( hi0 > lo0)
+    if ( hi0 > lo0 )
     {
       value = self.data[ Math.ceil((lo0 + hi0 ) / 2) ][field];
       while( lo <= hi )
@@ -724,7 +964,19 @@ classnamecellmodified:'grid-cellmodified',
   this.reorder = reorder;
   function reorder(field, asc)
   {
-    for (var i in self.columns)
+    if(self.total<=self.populatemax && asc)
+    {
+      self.unpopulate();
+      self.quickSort(0, self.data.length-1, (asc=='asc'?self.compasc:self.compdesc), field);
+      fillData();
+    }else{
+      fieldorder = field;
+      direction = asc;
+      reload();
+    }
+
+
+    /*for (var i in self.columns)
     {
       if (self.columns[i].id != field && self.columns[i].order != 0)
       {
@@ -732,9 +984,11 @@ classnamecellmodified:'grid-cellmodified',
         self.columns[i].setTitle();
       }
     }
+
     self.unpopulate();
     self.quickSort(0, self.data.length-1, (asc?self.compasc:self.compdesc), field);
-    self.populate();
+    self.populate();*/
+    
   }
 
 
@@ -781,7 +1035,7 @@ classnamecellmodified:'grid-cellmodified',
     }
 
   }
-
+  
   parseTemplates(code);
   parseRenders(code);
   parseData(code);
@@ -795,20 +1049,19 @@ WA.extend(WA.Containers.gridContainer, WA.Managers.wa4gl._container);
 WA.Containers.gridContainer.gridColumn = function(father, domID, container, code, listener)
 {
   var self = this;
-
   this.classname = code.attributes.classname!=undefined?code.attributes.classname:father.classes.classnameheadercolumn;
-
   WA.Containers.gridContainer.gridColumn.sourceconstructor.call(this, father, domID, code, 'div', { classname:this.classname }, listener);
 
   // DOM
   this.container = container;
   container.appendChild(this.domNode);
   this.domNode.style.width = (code.attributes.size?code.attributes.size:'300') + 'px';
-  this.domNode.style.display = '';  // is visible
-
+  this.domNode.style.display = '';  // is visible 
   this.classnametitle = code.attributes.classnametitle!=undefined?code.attributes.classnametitle:father.classes.classnameheadercolumntitle;
   this.classnamesizer = code.attributes.classnamesizer!=undefined?code.attributes.classnamesizer:father.classes.classnameheadercolumnsizer;
-
+  this.classnameorder = code.attributes.classnameorder!=undefined?code.attributes.classnameorder:father.classes.classnameordercolumn;  
+  this.classnameorderasc = code.attributes.classnameorderasc!=undefined?code.attributes.classnameorderasc:father.classes.classnameordercolumnasc;
+  this.classnameorderdesc = code.attributes.classnameorderdesc!=undefined?code.attributes.classnameorderdesc:father.classes.classnameordercolumndesc;
   this.field = code.attributes.field;
   this.sizemin = code.attributes.sizemin?code.attributes.sizemin:0;
   this.sizemax = code.attributes.sizemax?code.attributes.sizemax:undefined;
@@ -822,16 +1075,19 @@ WA.Containers.gridContainer.gridColumn = function(father, domID, container, code
 */
 
   this.size = WA.browser.getNodeWidth(this.domNode);
+  this.resizeable = code.attributes.resizeable == "yes";
+  this.sortable = code.attributes.sortable == "yes";
+  this.domNodeSizer = null;
+  this.startWidth = 0;
 
   // selector, selector pannel, sizer, all hidden
-  if (code.attributes.resizeable)
+  if (self.resizeable)
   {
-    this.domNodeSizer = WA.createDomNode('div', domID+'_sizer', this.classnamesizer);
-    this.domNode.appendChild(this.domNodeSizer);
+    self.domNodeSizer = WA.createDomNode('div', domID+'_sizer', self.classnamesizer);
+    self.domNode.appendChild(self.domNodeSizer);
   }
-  else
-    this.domNodeSizer = null;
 
+  this.orderable = code.attributes.orderable == "yes";
   this.domNodeTitle = WA.createDomNode('div', domID+'_titletext', this.classnametitle);
   this.domNodeTitle.innerHTML = code.attributes.title;
   this.domNode.appendChild(this.domNodeTitle);
@@ -839,21 +1095,19 @@ WA.Containers.gridContainer.gridColumn = function(father, domID, container, code
   this.setTitle = setTitle;
   function setTitle()
   {
-    return;
-
-    var title = self.code.attributes.title;
-    switch(self.order)
-    {
-      case 1: title = '<div class="'+self.classnameasc+'" />' + title; break;
-      case 2: title = '<div class="'+self.classnamedesc+'" />' + title; break;
-      default: title = '<div class="'+self.classnameempty+'" />' + title; break;
-    }
-    if (self.filtered)
-    {
-      title = '<div class="'+self.classnamefiltered+'" />' + title;
-    }
-
-    WA.browser.setInnerHTML(self.domNodeTitle, title);
+    if(self.sortable){
+      var title = self.code.attributes.title;
+      switch(self.order)
+      {
+        case 1: title = title + '<div class="'+self.classnameorderasc+'" />'; break;
+        case 2: title = title + '<div class="'+self.classnameorderdesc+'" />'; break;
+        default: title = title + '<div class="'+self.classnameorder+'" />'; break;
+      }
+      if (self.filtered)
+      {
+        title = '<div class="'+self.classnamefiltered+'" />' + title;
+      }
+      WA.browser.setInnerHTML(self.domNodeTitle, title);}
   }
 
   this.sethover = sethover;
@@ -861,13 +1115,13 @@ WA.Containers.gridContainer.gridColumn = function(father, domID, container, code
   {
     self.domNode.className = self.classname + (flag?' hover':'');
   }
-
+  
   this.setSize = setSize;
   function setSize(size)
   {
     return;
-
-
+    
+    
     if (size < self.sizemin)
       size = self.sizemin;
     if (self.sizemax != 0 && size > self.sizemax)
@@ -880,22 +1134,55 @@ WA.Containers.gridContainer.gridColumn = function(father, domID, container, code
   this.click = click;
   function click()
   {
-    return;
-
-    if (self.pleasenoclick)
+    if(self.sortable)
     {
-      self.pleasenoclick = false;
-      return;
+      if (self.pleasenoclick)
+      {
+        self.pleasenoclick = false;
+        return;
+      }
+
+      self.order++;
+      if (self.order > 2)
+        self.order = 0;
+
+      var d = null;
+      switch(self.order){
+        case 1:
+          d = 'asc';
+          break;
+        case 2:
+          d = 'desc';
+          break;
+        default:
+          d = null;
+      }
+      self.father.reorder(self.field, d);
+      self.setTitle();
     }
-    self.order ++;
-    if (self.order > 2)
-      self.order = 1;
-    self.container.reorder(self.id, self.order==1?true:false);
-    self.setTitle();
   }
 
+  this.reorder = reorder;
+  function reorder(field, asc)
+  {
+    return;
+
+
+    for (var i in self.columns)
+    {
+      if (self.columns[i].id != field && self.columns[i].order != 0)
+      {
+        self.columns[i].order = 0;
+        self.columns[i].setTitle();
+      }
+    }
+    self.unpopulate();
+    self.quickSort(0, self.data.length-1, (asc?self.compasc:self.compdesc), field);
+    self.populate();
+  }
+  
   this.clicksizer = clicksizer;
-  function clicksizer()
+  function clicksizer(order, id1, lineid, zone, metrics)
   {
     return;
 
@@ -907,40 +1194,51 @@ WA.Containers.gridContainer.gridColumn = function(father, domID, container, code
   }
 
   this.move = move;
-  function move(type, event, group, object, zone, data)
+  function move(order, id1, lineid, zone, metrics)
   {
-    return;
+    var xpointer = metrics.dragleft - 172;
+    var node = WA.toDOM(lineid).parentNode;
 
-    if (type == 'start')
-    {
-      self.pleasenoclick = true;
-      var size = WA.browser.getNodeWidth(self.domNode);
-      self.container.startdrag(self.id, size, event, group, object, zone, data);
-    }
-    else if (type == 'drag' || type == 'drop')
-    {
-      self.container.drag(event, group, object, zone, data);
-    }
-    if (type == 'drop')
-    {
-      self.container.drop(event, group, object, zone, data);
-    }
+    switch (order) {
+      case 'start':
+        self.domNodeSizer.className += ' dragged';
+        self.domNodeSizer.style.position = 'absolute';
+        self.domNodeSizer.style.left = metrics.dragdocumentleft + 'px';
+        self.domNodeSizer.style.width = metrics.mainwidth + 'px';
+        break;
+      case 'drag':
+        self.domNodeSizer.style.left = xpointer + 'px';
+        node.style.width = xpointer + 1 + 'px';
+        var id = /^([^w]+_\d)/;
+        WA.toDOM(id.exec(self.domNodeSizer.id)[0]).style.width = xpointer + 1 + 'px';
+        break;
+      case 'drop':
+        break;
+      }
   }
+
 
   this.start = start;
   function start()
   {
-    return;
-
-
-    WA.Managers.event.on('click', self.domNodeTitle, self.click, true);
-    WA.Managers.event.on('click', self.domNodeSizer, self.clicksizer, true);
-
-    if (self.sizeable)
+    if(self.sortable)
     {
-      WA.Managers.dd.registerGroup(self.domID+'_sizer', 'caller', false, null, self.move);
-      WA.Managers.dd.registerObject(self.domID+'_sizer', self.domID+'_sizer', self.domID+'_sizer', null);
+      self.order = 0;
+      self.setTitle();
+      WA.Managers.event.on('click', self.domNode, self.click, true);
     }
+
+    // Sizer group and object
+    if(self.resizeable)
+    {
+      if (self.father.hasdd) {
+        WA.Managers.dd.registerGroup(self.domNodeSizer, 'caller', true, self.father.domID, move);
+        WA.Managers.dd.registerObject(self.domNodeSizer, self.domNodeSizer, self.domNodeSizer, null);
+      }
+    }
+
+    return;
+    WA.Managers.event.on('click', self.domNodeSizer, self.clicksizer, true);
   }
 
   this.stop = stop;
@@ -988,6 +1286,7 @@ WA.Containers.gridContainer.gridColumn = function(father, domID, container, code
     self.domNode = null;
     self.domNodeTitle = null;
     self.domNodeSizer = null;
+    self.domNodeOrder = null;
     self.domNodeContainer = null;
     self.code = null;
     self.notify = null;
@@ -997,7 +1296,6 @@ WA.Containers.gridContainer.gridColumn = function(father, domID, container, code
     self = null;
   }
 
-  this.setTitle();
 }
 
 WA.extend(WA.Containers.gridContainer.gridColumn, WA.Managers.wa4gl._zone);
@@ -1011,10 +1309,10 @@ WA.Containers.gridContainer.gridZone = function(father, domID, container, code, 
   var self = this;
 
   this.classname = code.attributes.classname!=undefined?code.attributes.classname:father.classes.classnamebodycolumn;
-
+  
   WA.Containers.gridContainer.gridZone.sourceconstructor.call(this, father, domID, code, 'div', { classname:this.classname }, listener);
   this.domNode.style.position = 'relative';
-
+  
   this.field = code.attributes.field;
   this.classnamecell = father.classes.classnamebodycell;
 
@@ -1029,7 +1327,7 @@ WA.Containers.gridContainer.gridZone = function(father, domID, container, code, 
   {
     self.domNode.className = self.classname + (flag?' hover':'');
   }
-
+  
   this.setData = setData;
   function setData(data)
   {
@@ -1082,6 +1380,13 @@ WA.Containers.gridContainer.gridLine = function(father, domID, data, index)
       self.cells[i].className = self.father.zones[i].classnamecell + (flag?' hover':'');
     }
   }
+  
+  this.moving = moving;
+  function moving(order, id1, id2, zone, metrics) {
+
+    self.moving = true;
+    self.father.moving(order, id2, metrics);
+  }
 
   function createCell(father, content, data, c)
   {
@@ -1090,10 +1395,10 @@ WA.Containers.gridContainer.gridLine = function(father, domID, data, index)
     father.domNode.appendChild(domNodeCell);
     domNodeCell.column = c;
     domNodeCell.line = self.index;
-
+    
     if (!self.father.lineheight)
       self.father.lineheight = WA.browser.getNodeOuterHeight(domNodeCell);
-
+    
     // top should be index * lineheight
     domNodeCell.style.position = 'absolute';
     domNodeCell.style.left = '0';
@@ -1101,7 +1406,7 @@ WA.Containers.gridContainer.gridLine = function(father, domID, data, index)
     domNodeCell.style.width = '100%';
 
     // Considerar los TEMPLATES tambien
-
+    
     if (father.render)
     {
       eval( 'var cdata = ' + father.render+'(father.format, content, data);' );
@@ -1110,6 +1415,14 @@ WA.Containers.gridContainer.gridLine = function(father, domID, data, index)
     else
       WA.browser.setInnerHTML(domNodeCell, content);
 
+    cl = self.father.columns[c];
+    if (cl.orderable) {
+      domNodeCell.style.cursor = 'pointer';
+      if (self.father.hasdd) {
+        console.log("REGISTRANDO OBJECT", self.father.domID, domNodeCell);
+        WA.Managers.dd.registerObject(self.father.domID, domNodeCell, domNodeCell, moving, null);
+      }
+    }
     return domNodeCell;
   }
 
@@ -1123,15 +1436,15 @@ WA.Containers.gridContainer.gridLine = function(father, domID, data, index)
         self.cells[i] = createCell(self.father.zones[i], '', data, i);
     }
   }
-
-
-
-
+  
+  
+  
+  
   this.start = start;
   function start()
   {
     return;
-
+    
     for (var i in self.cells)
       WA.Managers.event.on('click', self.cells[i], self.click, true);
     self.running = 2;
@@ -1141,7 +1454,7 @@ WA.Containers.gridContainer.gridLine = function(father, domID, data, index)
   function stop()
   {
     return;
-
+    
     self.running = 0;
     for (var i in self.cells)
       WA.Managers.event.off('click', self.cells[i], self.click, true);
@@ -1151,7 +1464,7 @@ WA.Containers.gridContainer.gridLine = function(father, domID, data, index)
   function select()
   {
     return;
-
+    
     if (self.selected)
       return;
     self.selected = true;
@@ -1162,7 +1475,7 @@ WA.Containers.gridContainer.gridLine = function(father, domID, data, index)
   function unselect()
   {
     return;
-
+    
     if (!self.selected)
       return;
     self.selected = false;
@@ -1173,7 +1486,7 @@ WA.Containers.gridContainer.gridLine = function(father, domID, data, index)
   function invert()
   {
     return;
-
+    
     if (self.selected)
       self.unselect();
     else
@@ -1237,7 +1550,7 @@ WA.Containers.gridContainer.gridLine = function(father, domID, data, index)
   function blur()
   {
     return;
-
+    
     var data = self.container.zones[this.column].getData();
     self.container.zones[this.column].hide();
 
@@ -1267,7 +1580,7 @@ WA.Containers.gridContainer.gridLine = function(father, domID, data, index)
     self.cells = null;
     self = null;
   }
-
+  
   populate();
 }
 
@@ -1288,14 +1601,14 @@ WA.Containers.gridContainer.gridLine = function(father, domID, data, index)
 WA.Containers.gridContainer.gridFooter = function(father, domID, container)
 {
   var self = this;
-
+ 
   this.father = father;
   this.container = container;
 
   this.domNodeQuantityTitle = WA.createDomNode('div', domID+'_quantitytitle', 'quantity-title');
   this.domNodeQuantityTitle.innerHTML = 'Cantidad: ';
   this.container.appendChild(this.domNodeQuantityTitle);
-
+  
   this.domNodeQuantity = WA.createDomNode('div', domID+'_quantity', 'quantity');
   this.container.appendChild(this.domNodeQuantity);
 /*
@@ -1465,7 +1778,7 @@ WA.Containers.gridContainer.gridFooter = function(father, domID, container)
   {
     self.container.saveall();
   }
-
+  
   this.populate = populate;
   function populate()
   {
